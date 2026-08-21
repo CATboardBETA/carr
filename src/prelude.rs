@@ -1,2 +1,2 @@
-pub use crate::size::{S, Size};
-pub use crate::size_ops::*;
+pub use crate::size::*;
+pub use crate::dimension::*;
