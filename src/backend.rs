@@ -1,6 +1,10 @@
-pub trait Backend<T> {
+use std::ops::{Index, IndexMut};
+
+pub trait Backend<T>: Index<usize, Output = T> + IndexMut<usize, Output = T> + Sized {
     #[must_use]
     fn new_bck() -> Self;
+    #[must_use]
+    fn from_vec(v: Vec<T>) -> Option<Self>;
 }
 
 pub trait BackendOps<T>: Backend<T> + IntoIterator<Item = T> {
@@ -16,6 +20,10 @@ pub trait BackendOps<T>: Backend<T> + IntoIterator<Item = T> {
 impl<T: Default, const N: usize> Backend<T> for [T; N] {
     fn new_bck() -> Self {
         std::array::from_fn(|_| T::default())
+    }
+
+    fn from_vec(v: Vec<T>) -> Option<[T; N]> {
+        v.try_into().ok()
     }
 }
 
@@ -38,6 +46,10 @@ impl<T: Default, const N: usize> BackendOps<T> for [T; N] {
 impl<T> Backend<T> for Vec<T> {
     fn new_bck() -> Self {
         vec![]
+    }
+
+    fn from_vec(v: Self) -> Option<Self> {
+        Some(v)
     }
 }
 

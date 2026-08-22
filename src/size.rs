@@ -91,4 +91,3 @@ mod test {
         assert_eq!(1, Mod(x, y).size());
     }
 }
-

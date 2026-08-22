@@ -34,7 +34,8 @@ dim!(D10; 10; S1, S2, S3, S4, S5, S6, S7, S8, S9, S10);
 dim!(D11; 11; S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11);
 dim!(D12; 12; S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12);
 
-pub struct Transmute<X: Dimensions<2>>(X);
-impl<X: Dimensions<2>> Dimensions<2> for Transmute<X> {
+#[derive(Eq, PartialEq)]
+pub struct Transpose<X: Dimensions<2>>(X);
+impl<X: Dimensions<2>> Dimensions<2> for Transpose<X> {
     const SHAPE: [usize; 2] = [X::SHAPE[1], X::SHAPE[0]];
 }

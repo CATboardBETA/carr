@@ -1,6 +1,7 @@
 use crate::arr::Arr;
 use crate::backend::{Backend, BackendOps};
-use crate::dimension::{Dimensions, Transmute};
+use crate::dimension::{Dimensions, Transpose};
+use std::marker::PhantomData;
 use std::ops::{Add, Div, Mul, Rem, Sub};
 
 impl<B, T, D, const N_DIMS: usize> Add for Arr<B, T, D, N_DIMS>
@@ -71,11 +72,21 @@ where
 impl<B, T, D> Arr<B, T, D, 2>
 where
     B: Backend<T> + BackendOps<T>,
-    T: Add<Output = T>,
+    T: Clone,
     D: Dimensions<2>,
 {
-    pub fn transmute(&self) -> Arr<B, T, Transmute<D>, 2> {
-        todo!()
+    pub fn transpose(self) -> Arr<B, T, Transpose<D>, 2> {
+        let [height, width] = D::SHAPE;
+        let mut out = Vec::with_capacity(height * width);
+        for c in 0..height {
+            for r in 0..width {
+                out.push(self.storage[r * height + c].clone());
+            }
+        }
+        Arr {
+            storage: B::from_vec(out).unwrap(),
+            _phantom: PhantomData,
+        }
     }
 }
 
@@ -128,5 +139,15 @@ mod test {
         let arr2 = Arr::from([1, 3, 8, -3, -4, -2]);
         let expected = Arr::from([0, 2, 1, 3 % (-3), 2, (-2) % (-2)]);
         assert_eq!(arr1 % arr2, expected);
+    }
+
+    #[test]
+    fn transpose() {
+        type Dims = D2<S<2>, S<3>>;
+        type Dims2 = Transpose<Dims>;
+        let arr1 = Arr::<_, _, Dims, _>::from([3, 2, 1, 3, 2, -2]);
+        let expected = Arr::<_, _, Dims2, _>::from([3, 1, 2, 2, 3, -2]);
+        let transposed = dbg!(arr1).transpose();
+        assert_eq!(transposed, expected);
     }
 }
