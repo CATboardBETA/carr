@@ -8,7 +8,7 @@
     unsized_const_params,
     adt_const_params,
     inherent_associated_types,
-    generic_const_items,
+    generic_const_items
 )]
 #![cfg_attr(test, feature(const_index))]
 #![warn(clippy::pedantic)]
@@ -16,4 +16,5 @@
 
 pub mod arr;
 pub mod backend;
+pub mod dim;
 pub mod prelude;

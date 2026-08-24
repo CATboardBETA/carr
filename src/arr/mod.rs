@@ -51,7 +51,7 @@ where
 impl<B, T, const D: &'static [usize]> Default for Arr<B, T, D>
 where
     B: Backend<T>,
- {
+{
     fn default() -> Self {
         Self::new()
     }

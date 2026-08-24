@@ -1,5 +1,6 @@
 use crate::arr::Arr;
 use crate::backend::{Backend, BackendOps};
+use crate::dim::{Dimension, Transpose};
 use std::marker::PhantomData;
 use std::ops::{Add, Div, Mul, Rem, Sub};
 
@@ -62,26 +63,12 @@ where
         self.apply_ops(rhs, |(x, y)| x % y)
     }
 }
-
-pub trait Dimension {
-    const DIMS: &'static [usize];
-}
-
-pub struct Transpose<const D: &'static [usize]>;
-
-const TRANSPOSE<const D: &'static [usize]>: &[usize] = &[D[1], D[0]];
-
-impl<const D: &'static [usize]> Dimension for Transpose<D> {
-    const DIMS: &'static [usize] = TRANSPOSE::<D>;
-}
-
 impl<B, T, const D: &'static [usize]> Arr<B, T, D>
 where
     B: Backend<T> + BackendOps<T>,
     T: Clone,
 {
-    pub fn transpose(self) -> Arr<B, T, { <Transpose<D> as Dimension>::DIMS }>
-    {
+    pub fn transpose(self) -> Arr<B, T, { <Transpose<D> as Dimension>::DIMS }> {
         const {
             assert!(D.len() == 2);
         }
