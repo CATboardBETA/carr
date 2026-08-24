@@ -1,17 +1,15 @@
 use crate::arr::Arr;
 use crate::backend::Backend;
-use crate::dimension::Dimensions;
 use itertools::Itertools;
 use std::fmt::{Debug, Display, Formatter};
 
-impl<B, T, D, const N_DIMS: usize> Display for Arr<B, T, D, N_DIMS>
+impl<B, T, const D: &'static [usize]> Display for Arr<B, T, D>
 where
     B: Backend<T> + IntoIterator<Item = T> + Clone,
     T: Display,
-    D: Dimensions<N_DIMS>,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let mut dims_left = N_DIMS;
+        let mut dims_left = D.len();
         if dims_left > 2 {
             while dims_left > 2 {
                 write!(f, "[")?;
@@ -40,7 +38,7 @@ where
                 self.storage()
                     .clone()
                     .into_iter()
-                    .chunks(D::SHAPE[N_DIMS - 2])
+                    .chunks(D[D.len() - 2])
                     .into_iter()
                     .map(|x| {
                         format!(
@@ -53,8 +51,8 @@ where
             )?;
             writeln!(f, "]")?;
         }
-        if dims_left < N_DIMS {
-            while dims_left < N_DIMS {
+        if dims_left < D.len() {
+            while dims_left < D.len() {
                 write!(f, "]")?;
                 dims_left += 1;
             }
@@ -63,11 +61,10 @@ where
     }
 }
 
-impl<B, T, D, const N_DIMS: usize> Debug for Arr<B, T, D, N_DIMS>
+impl<B, T, const D: &'static [usize]> Debug for Arr<B, T, D>
 where
     B: Backend<T> + IntoIterator<Item = T> + Clone,
     T: Display,
-    D: Dimensions<N_DIMS>,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "{self}")

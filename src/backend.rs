@@ -9,11 +9,15 @@ pub trait Backend<T>: Index<usize, Output = T> + IndexMut<usize, Output = T> + S
 
 pub trait BackendOps<T>: Backend<T> + IntoIterator<Item = T> {
     #[must_use]
-    fn apply_ops<O: Backend<T> + BackendOps<T>, F: FnMut((T, T)) -> T>(
+    fn apply_ops<
+        B2: Backend<T> + BackendOps<T>,
+        B3: Backend<T> + BackendOps<T>,
+        F: FnMut((T, T)) -> T,
+    >(
         self,
-        other: O,
+        other: B2,
         op: F,
-    ) -> Self;
+    ) -> B3;
 }
 
 /// TODO: Remove bound on `T`. `MaybeUninit` perhaps?
@@ -28,18 +32,13 @@ impl<T: Default, const N: usize> Backend<T> for [T; N] {
 }
 
 impl<T: Default, const N: usize> BackendOps<T> for [T; N] {
-    fn apply_ops<O, F>(self, other: O, op: F) -> Self
+    fn apply_ops<B2, B3, F>(self, other: B2, op: F) -> B3
     where
-        O: Backend<T> + BackendOps<T>,
+        B2: Backend<T> + BackendOps<T>,
+        B3: Backend<T> + BackendOps<T>,
         F: FnMut((T, T)) -> T,
     {
-        self.into_iter()
-            .zip(other)
-            .map(op)
-            .collect::<Vec<_>>()
-            .try_into()
-            .map_err(|_| ())
-            .unwrap()
+        B3::from_vec(self.into_iter().zip(other).map(op).collect::<Vec<_>>()).unwrap()
     }
 }
 
@@ -54,11 +53,12 @@ impl<T> Backend<T> for Vec<T> {
 }
 
 impl<T> BackendOps<T> for Vec<T> {
-    fn apply_ops<O, F>(self, other: O, op: F) -> Self
+    fn apply_ops<B2, B3, F>(self, other: B2, op: F) -> B3
     where
-        O: Backend<T> + BackendOps<T>,
+        B2: Backend<T> + BackendOps<T>,
+        B3: Backend<T> + BackendOps<T>,
         F: FnMut((T, T)) -> T,
     {
-        self.into_iter().zip(other).map(op).collect()
+        B3::from_vec(self.into_iter().zip(other).map(op).collect::<Self>()).unwrap()
     }
 }

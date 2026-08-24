@@ -1,14 +1,12 @@
 use crate::arr::Arr;
 use crate::backend::{Backend, BackendOps};
-use crate::dimension::{Dimensions, Transpose};
 use std::marker::PhantomData;
 use std::ops::{Add, Div, Mul, Rem, Sub};
 
-impl<B, T, D, const N_DIMS: usize> Add for Arr<B, T, D, N_DIMS>
+impl<B, T, const D: &'static [usize]> Add for Arr<B, T, D>
 where
     B: Backend<T> + BackendOps<T>,
     T: Add<Output = T>,
-    D: Dimensions<N_DIMS>,
 {
     type Output = Self;
 
@@ -17,11 +15,10 @@ where
     }
 }
 
-impl<B, T, D, const N_DIMS: usize> Sub for Arr<B, T, D, N_DIMS>
+impl<B, T, const D: &'static [usize]> Sub for Arr<B, T, D>
 where
     B: Backend<T> + BackendOps<T>,
     T: Sub<Output = T>,
-    D: Dimensions<N_DIMS>,
 {
     type Output = Self;
 
@@ -30,11 +27,10 @@ where
     }
 }
 
-impl<B, T, D, const N_DIMS: usize> Mul for Arr<B, T, D, N_DIMS>
+impl<B, T, const D: &'static [usize]> Mul for Arr<B, T, D>
 where
     B: Backend<T> + BackendOps<T>,
     T: Mul<Output = T>,
-    D: Dimensions<N_DIMS>,
 {
     type Output = Self;
 
@@ -43,11 +39,10 @@ where
     }
 }
 
-impl<B, T, D, const N_DIMS: usize> Div for Arr<B, T, D, N_DIMS>
+impl<B, T, const D: &'static [usize]> Div for Arr<B, T, D>
 where
     B: Backend<T> + BackendOps<T>,
     T: Div<Output = T>,
-    D: Dimensions<N_DIMS>,
 {
     type Output = Self;
 
@@ -56,11 +51,10 @@ where
     }
 }
 
-impl<B, T, D, const N_DIMS: usize> Rem for Arr<B, T, D, N_DIMS>
+impl<B, T, const D: &'static [usize]> Rem for Arr<B, T, D>
 where
     B: Backend<T> + BackendOps<T>,
     T: Rem<Output = T>,
-    D: Dimensions<N_DIMS>,
 {
     type Output = Self;
 
@@ -69,14 +63,29 @@ where
     }
 }
 
-impl<B, T, D> Arr<B, T, D, 2>
+pub trait Dimension {
+    const DIMS: &'static [usize];
+}
+
+pub struct Transpose<const D: &'static [usize]>;
+
+const TRANSPOSE<const D: &'static [usize]>: &[usize] = &[D[1], D[0]];
+
+impl<const D: &'static [usize]> Dimension for Transpose<D> {
+    const DIMS: &'static [usize] = TRANSPOSE::<D>;
+}
+
+impl<B, T, const D: &'static [usize]> Arr<B, T, D>
 where
     B: Backend<T> + BackendOps<T>,
     T: Clone,
-    D: Dimensions<2>,
 {
-    pub fn transpose(self) -> Arr<B, T, Transpose<D>, 2> {
-        let [height, width] = D::SHAPE;
+    pub fn transpose(self) -> Arr<B, T, { <Transpose<D> as Dimension>::DIMS }>
+    {
+        const {
+            assert!(D.len() == 2);
+        }
+        let &[height, width] = D else { unreachable!() };
         let mut out = Vec::with_capacity(height * width);
         for c in 0..height {
             for r in 0..width {
@@ -93,13 +102,10 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::dimension::D2;
-    use crate::size::S;
 
     #[test]
     fn add() {
-        type Dims = D2<S<2>, S<3>>;
-        let arr1 = Arr::<_, _, Dims, _>::from([3, 2, 1, 3, 2, -2]);
+        let arr1 = Arr::<_, _, { &[2, 3][..] }>::from([3, 2, 1, 3, 2, -2]);
         let arr2 = Arr::from([1, 3, 8, -3, -4, -2]);
         let expected = Arr::from([4, 5, 9, 0, -2, -4]);
         assert_eq!(arr1 + arr2, expected);
@@ -107,8 +113,7 @@ mod test {
 
     #[test]
     fn sub() {
-        type Dims = D2<S<2>, S<3>>;
-        let arr1 = Arr::<_, _, Dims, _>::from([3, 2, 1, 3, 2, -2]);
+        let arr1 = Arr::<_, _, { &[2, 3][..] }>::from([3, 2, 1, 3, 2, -2]);
         let arr2 = Arr::from([1, 3, 8, -3, -4, -2]);
         let expected = Arr::from([2, -1, -7, 6, 6, 0]);
         assert_eq!(arr1 - arr2, expected);
@@ -116,8 +121,7 @@ mod test {
 
     #[test]
     fn mul() {
-        type Dims = D2<S<2>, S<3>>;
-        let arr1 = Arr::<_, _, Dims, _>::from([3, 2, 1, 3, 2, -2]);
+        let arr1 = Arr::<_, _, { &[2, 3][..] }>::from([3, 2, 1, 3, 2, -2]);
         let arr2 = Arr::from([1, 3, 8, -3, -4, -2]);
         let expected = Arr::from([3, 6, 8, -9, -8, 4]);
         assert_eq!(arr1 * arr2, expected);
@@ -125,8 +129,7 @@ mod test {
 
     #[test]
     fn div() {
-        type Dims = D2<S<2>, S<3>>;
-        let arr1 = Arr::<_, _, Dims, _>::from([3, 2, 1, 3, 2, -2]);
+        let arr1 = Arr::<_, _, { &[2, 3][..] }>::from([3, 2, 1, 3, 2, -2]);
         let arr2 = Arr::from([1, 3, 8, -3, -4, -2]);
         let expected = Arr::from([3, 2 / 3, 1 / 8, 3 / -3, 2 / (-4), (-2) / (-2)]);
         assert_eq!(arr1 / arr2, expected);
@@ -134,8 +137,7 @@ mod test {
 
     #[test]
     fn rem() {
-        type Dims = D2<S<2>, S<3>>;
-        let arr1 = Arr::<_, _, Dims, _>::from([3, 2, 1, 3, 2, -2]);
+        let arr1 = Arr::<_, _, { &[2, 3][..] }>::from([3, 2, 1, 3, 2, -2]);
         let arr2 = Arr::from([1, 3, 8, -3, -4, -2]);
         let expected = Arr::from([0, 2, 1, 3 % (-3), 2, (-2) % (-2)]);
         assert_eq!(arr1 % arr2, expected);
@@ -143,11 +145,9 @@ mod test {
 
     #[test]
     fn transpose() {
-        type Dims = D2<S<2>, S<3>>;
-        type Dims2 = Transpose<Dims>;
-        let arr1 = Arr::<_, _, Dims, _>::from([3, 2, 1, 3, 2, -2]);
-        let expected = Arr::<_, _, Dims2, _>::from([3, 1, 2, 2, 3, -2]);
-        let transposed = dbg!(arr1).transpose();
+        let arr1 = Arr::<_, _, { &[2, 3] }>::from([3i32, 2, 1, 3, 2, -2]);
+        let expected = Arr::<_, _, { &[3, 2] }>::from([3i32, 1, 2, 2, 3, -2]);
+        let transposed = arr1.transpose();
         assert_eq!(transposed, expected);
     }
 }

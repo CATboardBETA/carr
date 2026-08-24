@@ -1,5 +1,4 @@
 use crate::backend::{Backend, BackendOps};
-use crate::dimension::Dimensions;
 use std::marker::PhantomData;
 
 mod arr_ops;
@@ -7,19 +6,17 @@ mod conversions;
 mod debug;
 
 #[derive(PartialEq, Eq)]
-pub struct Arr<B, T, D, const N_DIMS: usize>
+pub struct Arr<B, T, const DIMS: &'static [usize]>
 where
     B: Backend<T>,
-    D: Dimensions<N_DIMS>,
 {
     storage: B,
-    _phantom: PhantomData<(T, D)>,
+    _phantom: PhantomData<T>,
 }
 
-impl<B, T, D, const N_DIMS: usize> Clone for Arr<B, T, D, N_DIMS>
+impl<B, T, const D: &'static [usize]> Clone for Arr<B, T, D>
 where
     B: Backend<T> + Clone,
-    D: Dimensions<N_DIMS>,
 {
     fn clone(&self) -> Self {
         Self {
@@ -30,10 +27,9 @@ where
 }
 
 /// Functions expressible generically for ALL const arrays
-impl<B, T, D, const N_DIMS: usize> Arr<B, T, D, N_DIMS>
+impl<B, T, const D: &'static [usize]> Arr<B, T, D>
 where
     B: Backend<T>,
-    D: Dimensions<N_DIMS>,
 {
     #[must_use]
     pub fn new() -> Self {
@@ -41,11 +37,6 @@ where
             storage: B::new_bck(),
             _phantom: PhantomData,
         }
-    }
-
-    #[must_use]
-    pub const fn shape(&self) -> [usize; N_DIMS] {
-        D::SHAPE
     }
 
     pub const fn storage(&self) -> &B {
@@ -57,20 +48,28 @@ where
     }
 }
 
-impl<B, T, D, const N_DIMS: usize> Arr<B, T, D, N_DIMS>
+impl<B, T, const D: &'static [usize]> Default for Arr<B, T, D>
+where
+    B: Backend<T>,
+ {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<B, T, const D: &'static [usize]> Arr<B, T, D>
 where
     B: Backend<T> + BackendOps<T>,
-    D: Dimensions<N_DIMS>,
 {
     #[must_use]
-    fn apply_ops<B2, D2, F, const NEW_DIMS: usize>(
+    fn apply_ops<B2, B3, F, const D2: &'static [usize]>(
         self,
-        other: Arr<B2, T, D, N_DIMS>,
+        other: Arr<B2, T, D2>,
         f: F,
-    ) -> Arr<B, T, D2, NEW_DIMS>
+    ) -> Arr<B3, T, D>
     where
-        B2: Backend<T> + BackendOps<T> + IntoIterator<Item = T>,
-        D2: Dimensions<NEW_DIMS>,
+        B2: Backend<T> + BackendOps<T>,
+        B3: Backend<T> + BackendOps<T>,
         F: FnMut((T, T)) -> T,
     {
         Arr {
