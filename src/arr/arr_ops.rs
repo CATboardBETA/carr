@@ -1,6 +1,6 @@
 use crate::arr::Arr;
 use crate::backend::{Backend, BackendOps};
-use crate::dim::{Dimension, Squeeze, Transpose};
+use crate::dim::{Dimension, Squeeze, Transpose, Unsqueeze};
 use std::marker::PhantomData;
 use std::ops::{Add, Div, Mul, Rem, Sub};
 
@@ -85,6 +85,7 @@ where
         }
     }
     pub fn squeeze(self) -> Arr<B, T, { <Squeeze<D> as Dimension>::DIMS }> {
+        // Just a reshape to specific dims.
         self.reshape()
     }
 
@@ -109,6 +110,10 @@ where
             storage: self.storage,
             _phantom: PhantomData,
         }
+    }
+
+    pub fn unsqueeze<const AT: usize>(self) -> Arr<B, T, { <Unsqueeze<D, AT> as Dimension>::DIMS }> {
+        self.reshape()
     }
 }
 
@@ -188,10 +193,9 @@ mod test {
 
     #[test]
     fn reshape() {
-        let arr1 = Arr::<_, _, { &[2,3] }>::from([3, 2, 1, 3, 2, -2]);
-        let expected = Arr::<_, _, { &[1,6] }>::from([3, 2, 1, 3, 2, -2]);
+        let arr1 = Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]);
+        let expected = Arr::<_, _, { &[1, 6] }>::from([3, 2, 1, 3, 2, -2]);
         let reshaped = arr1.reshape();
         assert_eq!(reshaped, expected);
-
     }
 }
