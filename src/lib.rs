@@ -2,6 +2,7 @@
 #![allow(incomplete_features)]
 #![feature(
     const_trait_impl,
+    const_index,
     min_generic_const_args,
     generic_const_args,
     macroless_generic_const_args,
@@ -10,7 +11,6 @@
     inherent_associated_types,
     generic_const_items
 )]
-#![cfg_attr(test, feature(const_index))]
 #![warn(clippy::pedantic)]
 #![warn(clippy::nursery)]
 

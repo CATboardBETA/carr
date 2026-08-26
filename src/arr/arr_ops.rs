@@ -1,6 +1,6 @@
 use crate::arr::Arr;
 use crate::backend::{Backend, BackendOps};
-use crate::dim::{Dimension, Transpose};
+use crate::dim::{Dimension, Squeeze, Transpose};
 use std::marker::PhantomData;
 use std::ops::{Add, Div, Mul, Rem, Sub};
 
@@ -84,6 +84,32 @@ where
             _phantom: PhantomData,
         }
     }
+    pub fn squeeze(self) -> Arr<B, T, { <Squeeze<D> as Dimension>::DIMS }> {
+        self.reshape()
+    }
+
+    pub fn reshape<const D2: &'static [usize]>(self) -> Arr<B, T, D2> {
+        // make sure total of dimensions is the same
+        const {
+            let mut d1 = 0;
+            let mut d2 = 0;
+            let mut i = 0;
+            while i < D.len() {
+                d1 *= D[i];
+                i += 1;
+            }
+            i = 0;
+            while i < D2.len() {
+                d2 *= D2[i];
+                i += 1;
+            }
+            assert!(d1 == d2);
+        }
+        Arr {
+            storage: self.storage,
+            _phantom: PhantomData,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -132,9 +158,40 @@ mod test {
 
     #[test]
     fn transpose() {
-        let arr1 = Arr::<_, _, { &[2, 3] }>::from([3i32, 2, 1, 3, 2, -2]);
-        let expected = Arr::<_, _, { &[3, 2] }>::from([3i32, 1, 2, 2, 3, -2]);
+        let arr1 = Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]);
+        let expected = Arr::<_, _, { &[3, 2] }>::from([3, 1, 2, 2, 3, -2]);
         let transposed = arr1.transpose();
         assert_eq!(transposed, expected);
+    }
+
+    #[test]
+    fn squeeze_1() {
+        let arr1 = Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]);
+        let expected = Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]);
+        let squeezed = arr1.squeeze();
+        assert_eq!(squeezed, expected);
+    }
+    #[test]
+    fn squeeze_2() {
+        let arr1 = Arr::<_, _, { &[1, 2, 3] }>::from([3, 2, 1, 3, 2, -2]);
+        let expected = Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]);
+        let squeezed = arr1.squeeze();
+        assert_eq!(squeezed, expected);
+    }
+    #[test]
+    fn squeeze_3() {
+        let arr1 = Arr::<_, _, { &[1, 2, 1, 3, 1] }>::from([3, 2, 1, 3, 2, -2]);
+        let expected = Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]);
+        let squeezed = arr1.squeeze();
+        assert_eq!(squeezed, expected);
+    }
+
+    #[test]
+    fn reshape() {
+        let arr1 = Arr::<_, _, { &[2,3] }>::from([3, 2, 1, 3, 2, -2]);
+        let expected = Arr::<_, _, { &[1,6] }>::from([3, 2, 1, 3, 2, -2]);
+        let reshaped = arr1.reshape();
+        assert_eq!(reshaped, expected);
+
     }
 }
