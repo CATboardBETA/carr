@@ -37,17 +37,20 @@ impl<const D: &'static [usize]> Dimension for Squeeze<D> {
 
 
 const UNSQUEEZE<const D: &'static [usize], const AT: usize>: [usize; ADD::<{ LEN::<D> }, 1>] = {
-let mut out = [0usize;  ADD::<{ LEN::<D> }, 1>];
-let mut i = 0;
-while i < LEN::<D> + 1 {
-if i == AT {
-out[i] = AT;
-i += 1;
-} else {
-out[i] = i;
-}
-i += 1;
-}
+    assert!(D.len() + 1 > AT);
+    let mut out = [0usize; ADD::<{ LEN::<D> }, 1>];
+    let mut i = 0;
+    let mut j = 0;
+    while i < LEN::<D> + 1{
+        if i == AT {
+            out[i] = 1;
+
+        } else {
+            out[i] = D[j];
+            j += 1;
+        }
+        i += 1;
+    }
 out
 };
 

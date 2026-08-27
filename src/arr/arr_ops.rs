@@ -198,4 +198,28 @@ mod test {
         let reshaped = arr1.reshape();
         assert_eq!(reshaped, expected);
     }
+
+    #[test]
+    fn unsqueeze_1() {
+        let arr1 = Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]);
+        let expected = Arr::<_, _, { &[1, 2, 3] }>::from([3, 2, 1, 3, 2, -2]);
+        let unsqueezed = arr1.unsqueeze::<0>();
+        assert_eq!(unsqueezed, expected);
+    }
+
+    #[test]
+    fn unsqueeze_2() {
+        let arr1 = Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]);
+        let expected = Arr::<_, _, { &[2, 3, 1] }>::from([3, 2, 1, 3, 2, -2]);
+        let unsqueezed = arr1.unsqueeze::<2>();
+        assert_eq!(unsqueezed, expected);
+    }
+
+    #[test]
+    fn unsqueeze_3() {
+        let arr1 = Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]);
+        let expected = Arr::<_, _, { &[2, 1, 3] }>::from([3, 2, 1, 3, 2, -2]);
+        let unsqueezed = arr1.unsqueeze::<1>();
+        assert_eq!(unsqueezed, expected);
+    }
 }
