@@ -112,7 +112,9 @@ where
         }
     }
 
-    pub fn unsqueeze<const AT: usize>(self) -> Arr<B, T, { <Unsqueeze<D, AT> as Dimension>::DIMS }> {
+    pub fn unsqueeze<const AT: usize>(
+        self,
+    ) -> Arr<B, T, { <Unsqueeze<D, AT> as Dimension>::DIMS }> {
         self.reshape()
     }
 }

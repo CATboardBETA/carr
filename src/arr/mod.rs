@@ -4,8 +4,10 @@ use std::marker::PhantomData;
 mod arr_ops;
 mod conversions;
 mod debug;
+mod eq;
+mod index;
 
-#[derive(PartialEq, Eq)]
+#[derive(Eq)]
 pub struct Arr<B, T, const DIMS: &'static [usize]>
 where
     B: Backend<T>,

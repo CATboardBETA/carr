@@ -35,7 +35,6 @@ impl<const D: &'static [usize]> Dimension for Squeeze<D> {
     const DIMS: &'static [usize] = SQUEEZE::<D>;
 }
 
-
 const UNSQUEEZE<const D: &'static [usize], const AT: usize>: [usize; ADD::<{ LEN::<D> }, 1>] = {
     assert!(D.len() + 1 > AT);
     let mut out = [0usize; ADD::<{ LEN::<D> }, 1>];
@@ -58,3 +57,7 @@ pub struct Unsqueeze<const D: &'static [usize], const AT: usize>;
 impl<const D: &'static [usize], const AT: usize> Dimension for Unsqueeze<D, AT> {
     const DIMS: &'static [usize] = &UNSQUEEZE::<D, AT>;
 }
+
+pub(crate) const INDEX_ARR<const D: &'static [usize], const AT: &'static [usize]>: &[usize] = {
+    &D[AT.len()..]
+};

@@ -1,10 +1,23 @@
-use std::ops::{Index, IndexMut};
+use itertools::Itertools;
+use std::ops::{Index, IndexMut, Range};
 
-pub trait Backend<T>: Index<usize, Output = T> + IndexMut<usize, Output = T> + Sized {
+pub trait Backend<T>:
+    Index<usize, Output = T>
+    + IndexMut<usize, Output = T>
+    + Index<Range<usize>, Output = [T]>
+    + IndexMut<Range<usize>, Output = [T]>
+    + Sized
+{
     #[must_use]
     fn new_bck() -> Self;
     #[must_use]
     fn from_vec(v: Vec<T>) -> Option<Self>;
+    #[must_use]
+    fn length(&self) -> usize;
+    #[must_use]
+    fn into_vec(self) -> Vec<T>;
+    #[must_use]
+    fn as_vec(&self) -> Vec<&T>;
 }
 
 pub trait BackendOps<T>: Backend<T> + IntoIterator<Item = T> {
@@ -26,8 +39,20 @@ impl<T: Default, const N: usize> Backend<T> for [T; N] {
         std::array::from_fn(|_| T::default())
     }
 
-    fn from_vec(v: Vec<T>) -> Option<[T; N]> {
+    fn from_vec(v: Vec<T>) -> Option<Self> {
         v.try_into().ok()
+    }
+
+    fn length(&self) -> usize {
+        self.len()
+    }
+
+    fn into_vec(self) -> Vec<T> {
+        self.into_iter().collect_vec()
+    }
+
+    fn as_vec(&self) -> Vec<&T> {
+        self.iter().collect_vec()
     }
 }
 
@@ -49,6 +74,18 @@ impl<T> Backend<T> for Vec<T> {
 
     fn from_vec(v: Self) -> Option<Self> {
         Some(v)
+    }
+
+    fn length(&self) -> usize {
+        self.len()
+    }
+
+    fn into_vec(self) -> Self {
+        self
+    }
+
+    fn as_vec(&self) -> Vec<&T> {
+        self.iter().collect_vec()
     }
 }
 
