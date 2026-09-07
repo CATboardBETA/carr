@@ -2,7 +2,6 @@ use crate::arr::Arr;
 use crate::backend::Backend;
 use crate::dim::INDEX_ARR;
 use itertools::Itertools;
-use std::fmt::Debug;
 use std::marker::PhantomData;
 
 // AT == usize::MAX means to put rest in that dimension. Can only be used once.
@@ -16,7 +15,7 @@ impl<B, T, const D: &'static [usize], const AT: &'static [usize]> IndexConstSlic
     for Arr<B, T, D>
 where
     B: Backend<T>,
-    T: Clone + Debug,
+    T: Clone,
 {
     type Output = Arr<Vec<T>, T, { INDEX_ARR::<D, AT> }>;
 
