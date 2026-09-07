@@ -29,7 +29,7 @@ where
         for (j, dim) in AT.iter().enumerate() {
             // if autofilling dimensions here
             if *dim == usize::MAX {
-                while i < AT.len() - j {
+                while dbg!(i) < dbg!(AT.len() - j) {
                     at.push(
                         D.iter().product::<usize>()
                             - AT.iter().filter(|x| **x != usize::MAX).product::<usize>(),

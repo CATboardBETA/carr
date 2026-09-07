@@ -5,7 +5,7 @@ mod arr_ops;
 mod conversions;
 mod debug;
 mod eq;
-mod index;
+pub mod index;
 
 #[derive(Eq)]
 pub struct Arr<B, T, const DIMS: &'static [usize]>

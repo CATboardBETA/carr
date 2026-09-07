@@ -11,7 +11,8 @@ impl<const D: &'static [usize]> Dimension for Transpose<D> {
 }
 
 const LEN<const OF: &'static [usize]>: usize = OF.len();
-const ADD<const X: usize, const Y: isize>: usize = (X.cast_signed() + Y).cast_unsigned();
+const ADD<const X: usize, const Y: usize>: usize = X + Y;
+const SUB<const X: usize, const Y: usize>: usize = X - Y;
 const DUMMY<const D: &'static [usize]>: [usize; LEN::<D>] = [0usize; LEN::<D>];
 const SQUEEZE1<const D: &'static [usize]>: ([usize; LEN::<D>], usize) = {
     let mut out = DUMMY::<D>;
@@ -58,6 +59,18 @@ impl<const D: &'static [usize], const AT: usize> Dimension for Unsqueeze<D, AT> 
     const DIMS: &'static [usize] = &UNSQUEEZE::<D, AT>;
 }
 
-pub(crate) const INDEX_ARR<const D: &'static [usize], const AT: &'static [usize]>: &[usize] = {
-    &D[AT.len()..]
+const INDEX_ARR1<const D: &'static [usize], const AT: &'static [usize]>: [usize; SUB::<{ LEN::<D> }, { LEN::<AT> }> ] = {
+    if AT.len() != 0 {
+        let mut out = [1usize; SUB::<{ LEN::<D> }, { LEN::<AT> }>];
+        let mut i = 0;
+        while i < (D.len() - AT.len()) {
+            out[i] = D[D.len() - 1 - i];
+            i += 1;
+        }
+        out
+    } else {
+        *D.as_array().unwrap()
+    }
 };
+
+pub(crate) const INDEX_ARR<const D: &'static [usize], const AT: &'static [usize]>: &[usize] = &INDEX_ARR1::<D, AT>;
