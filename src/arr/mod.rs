@@ -95,15 +95,19 @@ where
     B: Backend<T>,
     T: NumericalValue + Clone,
 {
+
+    #[must_use]
     pub fn new_zeroed() -> Self {
         Self::from(B::from_vec(vec![T::ZERO; TOTAL_DIM::<D>]).unwrap())
     }
 
+    #[must_use]
     pub fn new_ones() -> Self {
         Self::from(B::from_vec(vec![T::ONE; TOTAL_DIM::<D>]).unwrap())
     }
 
     #[cfg(feature = "rand")]
+    #[must_use]
     pub fn new_random() -> Self
     where
         T: SampleUniform,
@@ -116,6 +120,7 @@ where
     }
 
     #[cfg(feature = "rand")]
+    #[must_use]
     pub fn new_random_rng<R: rand::Rng + ?Sized>(rng: &mut R) -> Self
     where
         T: SampleUniform,
@@ -127,6 +132,7 @@ where
     }
 
     #[cfg(feature = "rand")]
+    #[must_use]
     pub fn new_random_range(start: T, end: T) -> Self
     where
         T: SampleUniform,
@@ -137,6 +143,7 @@ where
         Self::from(B::from_vec(a.to_vec()).unwrap())
     }
     #[cfg(feature = "rand")]
+    #[must_use]
     pub fn new_random_range_rng<R: rand::Rng + ?Sized>(rng: &mut R, start: T, end: T) -> Self
     where
         T: SampleUniform,
