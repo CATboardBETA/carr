@@ -6,8 +6,9 @@ use rand::distr::StandardUniform;
 use rand::distr::uniform::SampleUniform;
 #[cfg(feature = "rand")]
 use rand::distr::Uniform;
-use std::marker::PhantomData;
+#[cfg(feature = "rand")]
 use rand::RngExt;
+use std::marker::PhantomData;
 
 mod arr_ops;
 mod conversions;
