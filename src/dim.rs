@@ -13,6 +13,15 @@ impl<const D: &'static [usize]> Dimension for Transpose<D> {
 const LEN<const OF: &'static [usize]>: usize = OF.len();
 const ADD<const X: usize, const Y: usize>: usize = X + Y;
 const SUB<const X: usize, const Y: usize>: usize = X - Y;
+pub(crate) const TOTAL_DIM<const D: &'static [usize]>: usize = {
+    let mut i = 0;
+    let mut total = 1;
+    while i < D.len() {
+        total *= D[i];
+        i += 1;
+    }
+    total
+};
 const DUMMY<const D: &'static [usize]>: [usize; LEN::<D>] = [0usize; LEN::<D>];
 const SQUEEZE1<const D: &'static [usize]>: ([usize; LEN::<D>], usize) = {
     let mut out = DUMMY::<D>;

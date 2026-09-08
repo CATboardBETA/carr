@@ -1,8 +1,17 @@
-use crate::backend::{Backend, BackendOps};
+use crate::backend::{Backend, BackendOps, NumericalValue};
+use crate::dim::TOTAL_DIM;
+#[cfg(feature = "rand")]
+use rand::distr::StandardUniform;
+#[cfg(feature = "rand")]
+use rand::distr::uniform::SampleUniform;
+#[cfg(feature = "rand")]
+use rand::distr::Uniform;
 use std::marker::PhantomData;
+use rand::RngExt;
 
 mod arr_ops;
 mod conversions;
+#[coverage(off)]
 mod debug;
 mod eq;
 pub mod index;
@@ -78,5 +87,81 @@ where
             storage: self.storage.apply_ops(other.storage, f),
             _phantom: PhantomData,
         }
+    }
+}
+
+impl<B, T, const D: &'static [usize]> Arr<B, T, D>
+where
+    B: Backend<T>,
+    T: NumericalValue + Clone,
+{
+    pub fn new_zeroed() -> Self {
+        Self::from(B::from_vec(vec![T::ZERO; TOTAL_DIM::<D>]).unwrap())
+    }
+
+    pub fn new_ones() -> Self {
+        Self::from(B::from_vec(vec![T::ONE; TOTAL_DIM::<D>]).unwrap())
+    }
+
+    #[cfg(feature = "rand")]
+    pub fn new_random() -> Self
+    where
+        T: SampleUniform,
+        StandardUniform: rand::distr::Distribution<T>
+    {
+        let mut rng = rand::rng();
+        let distr = StandardUniform;
+        let a: [T; TOTAL_DIM::<D>] = std::array::from_fn(|_| rng.sample(distr));
+        Self::from(B::from_vec(a.to_vec()).unwrap())
+    }
+
+    #[cfg(feature = "rand")]
+    pub fn new_random_rng<R: rand::Rng + ?Sized>(rng: &mut R) -> Self
+    where
+        T: SampleUniform,
+        StandardUniform: rand::distr::Distribution<T>
+    {
+        let distr = StandardUniform;
+        let a: [T; TOTAL_DIM::<D>] = std::array::from_fn(|_| rng.sample(distr));
+        Self::from(B::from_vec(a.to_vec()).unwrap())
+    }
+
+    #[cfg(feature = "rand")]
+    pub fn new_random_range(start: T, end: T) -> Self
+    where
+        T: SampleUniform,
+    {
+        let mut rng = rand::rng();
+        let distr = &Uniform::new(start, end).unwrap();
+        let a: [T; TOTAL_DIM::<D>] = std::array::from_fn(|_| rng.sample(distr));
+        Self::from(B::from_vec(a.to_vec()).unwrap())
+    }
+    #[cfg(feature = "rand")]
+    pub fn new_random_range_rng<R: rand::Rng + ?Sized>(rng: &mut R, start: T, end: T) -> Self
+    where
+        T: SampleUniform,
+    {
+        let distr = &Uniform::new(start, end).unwrap();
+        let a: [T; TOTAL_DIM::<D>] = std::array::from_fn(|_| rng.sample(distr));
+        Self::from(B::from_vec(a.to_vec()).unwrap())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::array;
+    use crate::arr::Arr;
+
+    #[test]
+    fn zeroed_test() {
+        let arr = Arr::<Vec<_>, f32, { &[1, 2] }>::new_zeroed();
+        let expected = Arr::<_, f32, { &[1, 2] }>::from([0.,0.]);
+        assert_eq!(arr, expected);
+    }
+    #[test]
+    fn ones_test() {
+        let arr = Arr::<Vec<_>, f32, { &[5, 2, 1, 2] }>::new_ones();
+        let expected = Arr::<_, f32, { &[5, 2, 1, 2] }>::from(array::repeat::<_, { 5 * 2 * 2}>(1.));
+        assert_eq!(arr, expected);
     }
 }

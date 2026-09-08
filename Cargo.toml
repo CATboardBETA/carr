@@ -6,3 +6,9 @@ authors = ["CATboardBETA"]
 
 [dependencies]
 itertools = "0.15.0"
+rand = { version = "0.10.2", optional = true }
+
+[features]
+default = []
+full = ["rand"]
+rand = ["dep:rand"]

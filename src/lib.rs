@@ -1,6 +1,8 @@
 #![forbid(unsafe_code)]
 #![allow(incomplete_features)]
+#![allow(clippy::missing_panics_doc)]
 #![feature(
+    coverage_attribute,
     const_trait_impl,
     const_index,
     min_generic_const_args,
