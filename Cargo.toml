@@ -1,7 +1,14 @@
 [package]
 name = "carr"
+description = "Constant-sized arrays using const generics"
 version = "0.1.0"
 edition = "2024"
+license = "GPL-3"
+license-file = "LICENSE.md"
+repository = "https://github.com/CATboardBETA/carr"
+readme = "README.md"
+keywords = ["nightly", "array", "const-generics", "matrix", "tensor"]
+categories = ["mathematics", "data-structures", "science", ]
 authors = ["CATboardBETA"]
 
 [dependencies]
