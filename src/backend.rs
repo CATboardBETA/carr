@@ -110,8 +110,6 @@ pub trait NumericalValue: Sized {
     const ZERO: Self;
     const ONE: Self;
 
-    const MIN: Self;
-    const MAX: Self;
     #[cfg(feature = "rand")]
     fn new_random<R: rand::Rng + ?Sized, D: rand::distr::Distribution<Self>>(rng: &mut R, distr: D) -> Self
     where
@@ -126,8 +124,6 @@ macro_rules! numerical_value {
             const ZERO: Self = 0 as Self;
             #[allow(clippy::cast_precision_loss)]
             const ONE: Self = 1 as Self;
-            const MIN: Self = Self::MIN;
-            const MAX: Self = Self::MAX;
             #[cfg(feature = "rand")]
             fn new_random<R: rand::Rng + ?Sized, D: rand::distr::Distribution<Self>>(rng: &mut R, distr: D) -> Self
             where

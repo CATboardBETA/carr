@@ -69,7 +69,9 @@ impl<const D: &'static [usize], const AT: usize> Dimension for Unsqueeze<D, AT> 
 }
 
 const INDEX_ARR1<const D: &'static [usize], const AT: &'static [usize]>: [usize; SUB::<{ LEN::<D> }, { LEN::<AT> }> ] = {
-    if AT.len() != 0 {
+    if AT.is_empty() {
+        *D.as_array().unwrap()
+    } else {
         let mut out = [1usize; SUB::<{ LEN::<D> }, { LEN::<AT> }>];
         let mut i = 0;
         while i < (D.len() - AT.len()) {
@@ -77,8 +79,6 @@ const INDEX_ARR1<const D: &'static [usize], const AT: &'static [usize]>: [usize;
             i += 1;
         }
         out
-    } else {
-        *D.as_array().unwrap()
     }
 };
 

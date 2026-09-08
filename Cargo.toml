@@ -5,7 +5,6 @@ version = "0.1.0"
 edition = "2024"
 license = "GPL-3.0"
 repository = "https://github.com/CATboardBETA/carr"
-readme = "README.md"
 keywords = ["nightly", "array", "const-generics", "matrix", "tensor"]
 categories = ["mathematics", "data-structures", "science", ]
 authors = ["CATboardBETA"]
