@@ -5,6 +5,10 @@ use rand::RngExt;
 use rand::distr::uniform::SampleUniform;
 use std::ops::{Index, IndexMut, Range};
 
+/// A storage backend for arrays. This does not store the dimensions, and can be a variable-length
+/// type (e.g. a [`Vec`]).
+///
+/// By default, this is implemented for [`Vec<T>`] and [`[T; N]`](array)
 pub trait Backend<T>:
     Index<usize, Output = T>
     + IndexMut<usize, Output = T>
@@ -12,19 +16,29 @@ pub trait Backend<T>:
     + IndexMut<Range<usize>, Output = [T]>
     + Sized
 {
+    /// Creates a new, empty instance of the backend.
     #[must_use]
     fn new_bck() -> Self;
+    /// Create an instance of this backend from a [`Vec<T>`].
     #[must_use]
     fn from_vec(v: Vec<T>) -> Option<Self>;
+    /// Get the 1-D length of this backend. This should be equivalent to the product of the
+    /// dimensions slice of the outer array.
     #[must_use]
     fn length(&self) -> usize;
+    /// Creates a [`Vec<T>`] from a backend, consuming the underlying storage.
     #[must_use]
     fn into_vec(self) -> Vec<T>;
+    /// Creates a [`Vec<T>`] from a backend, without consuming the underlying storage.
     #[must_use]
     fn as_vec(&self) -> Vec<&T>;
 }
 
+/// Implemented for [backends](Backend) that can have operations applied to them. This is required
+/// for most operations, but not all.
 pub trait BackendOps<T>: Backend<T> + IntoIterator<Item = T> {
+    /// Applies a function element-wise between two arrays, returning the result collected into
+    /// a backend..
     #[must_use]
     fn apply_ops<
         B2: Backend<T> + BackendOps<T>,
@@ -104,12 +118,18 @@ impl<T> BackendOps<T> for Vec<T> {
     }
 }
 
+/// Implemented for all numerical types (including char). This is an implementation detail of some
+/// array creation functions, such as [`Arr::new_zeroed`](crate::arr::Arr::new_zeroed),
+/// [`Arr::new_ones`](crate::arr::Arr::new_ones), [`Arr::new_random`](crate::arr::Arr::new_random),
+/// etc.
 pub trait NumericalValue: Sized {
+    /// Number of bits in the representation of `Self`
     const BIT_WIDTH: usize;
-
     const ZERO: Self;
     const ONE: Self;
 
+    /// Creates a new instance of this type, given a RNG and a distribution. Used by
+    /// [`Arr::new_random`](crate::arr::Arr::new_random) and friends.
     #[cfg(feature = "rand")]
     fn new_random<R: rand::Rng + ?Sized, D: rand::distr::Distribution<Self>>(rng: &mut R, distr: D) -> Self
     where
