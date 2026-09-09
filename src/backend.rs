@@ -1,3 +1,6 @@
+//! Backend storage, internal to [`arr::Arr`](crate::arr::Arr). Also contains a trait for numerical
+//! types (e.g. i32, f64, u8, etc.)
+
 use itertools::Itertools;
 #[cfg(feature = "rand")]
 use rand::RngExt;
@@ -38,7 +41,7 @@ pub trait Backend<T>:
 /// for most operations, but not all.
 pub trait BackendOps<T>: Backend<T> + IntoIterator<Item = T> {
     /// Applies a function element-wise between two arrays, returning the result collected into
-    /// a backend..
+    /// a backend.
     #[must_use]
     fn apply_ops<
         B2: Backend<T> + BackendOps<T>,
@@ -128,7 +131,7 @@ pub trait NumericalValue: Sized {
     const ZERO: Self;
     const ONE: Self;
 
-    /// Creates a new instance of this type, given a RNG and a distribution. Used by
+    /// Creates a new instance of this type, given an RNG and a distribution. Used by
     /// [`Arr::new_random`](crate::arr::Arr::new_random) and friends.
     #[cfg(feature = "rand")]
     fn new_random<R: rand::Rng + ?Sized, D: rand::distr::Distribution<Self>>(rng: &mut R, distr: D) -> Self
