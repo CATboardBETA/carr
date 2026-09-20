@@ -132,7 +132,9 @@ impl<T: Default> BackendOps<T> for Vec<T> {
 pub trait NumericalValue: Sized {
     /// Number of bits in the representation of `Self`
     const BIT_WIDTH: usize;
+    /// This type's representation of zero (0)
     const ZERO: Self;
+    /// This type's representation of one (1).
     const ONE: Self;
 
     /// Creates a new instance of this type, given an RNG and a distribution. Used by

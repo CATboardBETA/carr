@@ -1,3 +1,9 @@
+//! Dimension structs. 
+//! 
+//! These work by implementing [`Dimension`], which has an associated constant
+//! describing the final dimensions, given an input. See [`Dimension`] for more information and
+//! an example implementation.
+
 /// Implemented by all non-trivial Dimension structs.
 ///
 /// To implement yourself, create a const with a const generic argument of type `&'static [usize]`.
@@ -19,6 +25,7 @@
 /// }
 /// ```
 pub trait Dimension {
+    /// Output dimensions of the implementor.
     const DIMS: &'static [usize];
 }
 
