@@ -18,6 +18,7 @@
 #![warn(clippy::pedantic)]
 #![warn(clippy::nursery)]
 #![allow(clippy::missing_panics_doc)]
+#![warn(missing_docs)]
 
 pub mod arr;
 pub mod backend;
