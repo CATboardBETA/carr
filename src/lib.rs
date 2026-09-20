@@ -1,6 +1,5 @@
 #![forbid(unsafe_code)]
 #![allow(incomplete_features)]
-#![allow(clippy::missing_panics_doc)]
 #![feature(
     coverage_attribute,
     const_trait_impl,
@@ -11,10 +10,12 @@
     unsized_const_params,
     adt_const_params,
     inherent_associated_types,
-    generic_const_items
+    generic_const_items,
+    vec_from_fn
 )]
 #![warn(clippy::pedantic)]
 #![warn(clippy::nursery)]
+#![allow(clippy::missing_panics_doc)]
 
 pub mod arr;
 pub mod backend;

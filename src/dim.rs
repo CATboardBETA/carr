@@ -1,10 +1,10 @@
 /// Implemented by all non-trivial Dimension structs.
-/// 
+///
 /// To implement yourself, create a const with a const generic argument of type `&'static [usize]`.
 /// This represents the dimensions in. The const should return the output dimensions. Create a
 /// fieldless struct with a const generic parameter with type `&'static [usize]`, then implement
 /// [`Dimension`] on it.
-/// 
+///
 /// Simple example:
 /// ```
 /// # #![feature(min_adt_const_params, adt_const_params, unsized_const_params, generic_const_items)]
