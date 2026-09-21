@@ -1,3 +1,6 @@
+//! Operations applied to arrays. These are implemented using traits in [`std::ops`] whenever
+//! possible.
+
 use crate::arr::Arr;
 use crate::backend::{Backend, BackendOps};
 use crate::dim::{Dimension, Squeeze, Transpose, Unsqueeze};
@@ -68,6 +71,7 @@ where
     B: Backend<T> + BackendOps<T>,
     T: Clone,
 {
+    /// Transpose an array, reflecting along the primary diagonal.
     pub fn transpose(self) -> Arr<B, T, { <Transpose<D> as Dimension>::DIMS }> {
         const {
             assert!(D.len() == 2);
@@ -84,11 +88,16 @@ where
             _phantom: PhantomData,
         }
     }
+
+    /// Squeeze an array - equivalent to removing all extra dimension (where `D[n] == 1`)
     pub fn squeeze(self) -> Arr<B, T, { <Squeeze<D> as Dimension>::DIMS }> {
         // Just a reshape to specific dims.
         self.reshape()
     }
 
+    /// Reshape an array to any other array with equivalent number of positions in the array.
+    ///
+    /// This method is the basis behind [`Arr::squeeze`], [`Arr::unsqueeze`], and more.
     pub fn reshape<const D2: &'static [usize]>(self) -> Arr<B, T, D2> {
         // make sure total of dimensions is the same
         const {
@@ -112,6 +121,7 @@ where
         }
     }
 
+    /// At an extra dimension at `AT`, with 1 position.
     pub fn unsqueeze<const AT: usize>(
         self,
     ) -> Arr<B, T, { <Unsqueeze<D, AT> as Dimension>::DIMS }> {

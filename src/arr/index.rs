@@ -1,13 +1,19 @@
+//! Indexing operations. Includes a custom trait for indexing with constant dimension,
+
 use crate::arr::Arr;
 use crate::backend::Backend;
 use crate::dim::INDEX_ARR;
 use itertools::Itertools;
 use std::marker::PhantomData;
 
-// AT == usize::MAX means to put rest in that dimension. Can only be used once.
+/// Index/slice an [`Arr`]. Equivalent to [`std::ops::Index`], except uses const generics instead of
+/// a parameter to specify where to index/slice.
 pub trait IndexConstSlice<const AT: &'static [usize]> {
+    /// Output type from indexing
     type Output;
+    /// Checked indexing operation. Panics on out-of-bounds.
     fn index(&self) -> Self::Output;
+    /// Checked indexing operation. Returns [`None`] on out-of-bounds
     fn try_index(&self) -> Option<Self::Output>;
 }
 
@@ -15,7 +21,7 @@ impl<B, T, const D: &'static [usize], const AT: &'static [usize]> IndexConstSlic
     for Arr<B, T, D>
 where
     B: Backend<T>,
-    T: Clone,
+    T: Default + Clone,
 {
     type Output = Arr<Vec<T>, T, { INDEX_ARR::<D, AT> }>;
 
@@ -23,29 +29,12 @@ where
         const {
             assert!(D.len() >= AT.len());
         }
-        let mut at = Vec::new();
-        let mut i = 0;
-        for (j, dim) in AT.iter().enumerate() {
-            // if autofilling dimensions here
-            if *dim == usize::MAX {
-                while dbg!(i) < dbg!(AT.len() - j) {
-                    at.push(
-                        D.iter().product::<usize>()
-                            - AT.iter().filter(|x| **x != usize::MAX).product::<usize>(),
-                    );
-                    i += 1;
-                }
-            } else {
-                at.push(AT[j]);
-            }
-            i += 1;
-        }
-        let index = at
+        let index = AT
             .iter()
             .enumerate()
             .map(|(i, x)| D[(i + 1)..].iter().product::<usize>() * x)
             .sum::<usize>();
-        let slice_len = D[at.len()..].iter().product::<usize>();
+        let slice_len = D[AT.len()..].iter().product::<usize>();
         let out_storage: &[T] = &self.storage()[index..(index + slice_len)];
         let out_storage = out_storage.iter().cloned().collect_vec();
         Arr {
