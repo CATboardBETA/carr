@@ -12,7 +12,6 @@
     adt_const_params,
     inherent_associated_types,
     generic_const_items,
-    vec_from_fn
 )]
 #![warn(clippy::pedantic)]
 #![warn(clippy::nursery)]
