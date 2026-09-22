@@ -1,5 +1,5 @@
-//! Dimension structs. 
-//! 
+//! Dimension structs.
+//!
 //! These work by implementing [`Dimension`], which has an associated constant
 //! describing the final dimensions, given an input. See [`Dimension`] for more information and
 //! an example implementation.

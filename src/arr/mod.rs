@@ -18,6 +18,7 @@ mod conversions;
 mod debug;
 mod eq;
 pub mod index;
+mod iter;
 
 /// The primary struct in `carr`.
 ///
@@ -79,7 +80,12 @@ where
             _phantom: PhantomData,
         }
     }
+}
 
+impl<B, T, const D: &'static [usize]> Arr<B, T, D>
+where
+    B: Backend<T>,
+{
     /// Returns an immutable reference to the internal storage.
     pub const fn storage(&self) -> &B {
         &self.storage

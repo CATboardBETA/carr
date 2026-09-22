@@ -2,6 +2,7 @@
 
 use crate::arr::Arr;
 use crate::backend::Backend;
+use crate::dim::TOTAL_DIM;
 use std::marker::PhantomData;
 
 impl<T, const N: usize, const D: &'static [usize]> From<[T; N]> for Arr<[T; N], T, D>
@@ -21,7 +22,8 @@ where
     B: Backend<T>,
 {
     /// Convert from a [`Backend`]-implementor directly into an array, without copying.
-    pub const fn from(storage: B) -> Self {
+    pub fn from(storage: B) -> Self {
+        assert_eq!(storage.length(), TOTAL_DIM::<D>);
         Self {
             storage,
             _phantom: PhantomData,
