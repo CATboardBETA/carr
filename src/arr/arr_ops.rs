@@ -5,7 +5,7 @@ use crate::arr::Arr;
 use crate::backend::{Backend, BackendOps};
 use crate::dim::{Dimension, Squeeze, Transpose, Unsqueeze};
 use std::marker::PhantomData;
-use std::ops::{Add, Div, Mul, Rem, Sub};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
 
 impl<B, T, const D: &'static [usize]> Add for Arr<B, T, D>
 where
@@ -16,6 +16,16 @@ where
 
     fn add(self, rhs: Self) -> Self::Output {
         self.apply_ops(rhs, |(x, y)| x + y)
+    }
+}
+
+impl<B, T, const D: &'static [usize]> AddAssign for Arr<B, T, D>
+where
+    B: Backend<T>,
+    for<'a> &'a T: Add<Output = T>,
+{
+    fn add_assign(&mut self, rhs: Self) {
+        *self.storage_mut() = B::from_vec(self.iter().zip(rhs.iter()).map(|(l, r)| l + r).collect::<Vec<_>>()).unwrap();
     }
 }
 
@@ -31,6 +41,16 @@ where
     }
 }
 
+impl<B, T, const D: &'static [usize]> SubAssign for Arr<B, T, D>
+where
+    B: Backend<T>,
+    for<'a> &'a T: Sub<Output = T>,
+{
+    fn sub_assign(&mut self, rhs: Self) {
+        *self.storage_mut() = B::from_vec(self.iter().zip(rhs.iter()).map(|(l, r)| l - r).collect::<Vec<_>>()).unwrap();
+    }
+}
+
 impl<B, T, const D: &'static [usize]> Mul for Arr<B, T, D>
 where
     B: Backend<T> + BackendOps<T>,
@@ -40,6 +60,16 @@ where
 
     fn mul(self, rhs: Self) -> Self::Output {
         self.apply_ops(rhs, |(x, y)| x * y)
+    }
+}
+
+impl<B, T, const D: &'static [usize]> MulAssign for Arr<B, T, D>
+where
+    B: Backend<T>,
+    for<'a> &'a T: Mul<Output = T>,
+{
+    fn mul_assign(&mut self, rhs: Self) {
+        *self.storage_mut() = B::from_vec(self.iter().zip(rhs.iter()).map(|(l, r)| l * r).collect::<Vec<_>>()).unwrap();
     }
 }
 
@@ -55,6 +85,16 @@ where
     }
 }
 
+impl<B, T, const D: &'static [usize]> DivAssign for Arr<B, T, D>
+where
+    B: Backend<T>,
+    for<'a> &'a T: Div<Output = T>,
+{
+    fn div_assign(&mut self, rhs: Self) {
+        *self.storage_mut() = B::from_vec(self.iter().zip(rhs.iter()).map(|(l, r)| l / r).collect::<Vec<_>>()).unwrap();
+    }
+}
+
 impl<B, T, const D: &'static [usize]> Rem for Arr<B, T, D>
 where
     B: Backend<T> + BackendOps<T>,
@@ -66,6 +106,17 @@ where
         self.apply_ops(rhs, |(x, y)| x % y)
     }
 }
+
+impl<B, T, const D: &'static [usize]> RemAssign for Arr<B, T, D>
+where
+    B: Backend<T>,
+    for<'a> &'a T: Rem<Output = T>,
+{
+    fn rem_assign(&mut self, rhs: Self) {
+        *self.storage_mut() = B::from_vec(self.iter().zip(rhs.iter()).map(|(l, r)| l % r).collect::<Vec<_>>()).unwrap();
+    }
+}
+
 impl<B, T, const D: &'static [usize]> Arr<B, T, D>
 where
     B: Backend<T> + BackendOps<T>,
@@ -135,42 +186,52 @@ mod test {
 
     #[test]
     fn add() {
-        let arr1 = Arr::<_, _, { &[2, 3][..] }>::from([3, 2, 1, 3, 2, -2]);
+        let mut arr1 = Arr::<_, _, { &[2, 3][..] }>::from([3, 2, 1, 3, 2, -2]);
         let arr2 = Arr::from([1, 3, 8, -3, -4, -2]);
         let expected = Arr::from([4, 5, 9, 0, -2, -4]);
-        assert_eq!(arr1 + arr2, expected);
+        assert_eq!(arr1.clone() + arr2.clone(), expected);
+        arr1 += arr2;
+        assert_eq!(arr1, expected);
     }
 
     #[test]
     fn sub() {
-        let arr1 = Arr::<_, _, { &[2, 3][..] }>::from([3, 2, 1, 3, 2, -2]);
+        let mut arr1 = Arr::<_, _, { &[2, 3][..] }>::from([3, 2, 1, 3, 2, -2]);
         let arr2 = Arr::from([1, 3, 8, -3, -4, -2]);
         let expected = Arr::from([2, -1, -7, 6, 6, 0]);
-        assert_eq!(arr1 - arr2, expected);
+        assert_eq!(arr1.clone() - arr2.clone(), expected);
+        arr1 -= arr2;
+        assert_eq!(arr1, expected);
     }
 
     #[test]
     fn mul() {
-        let arr1 = Arr::<_, _, { &[2, 3][..] }>::from([3, 2, 1, 3, 2, -2]);
+        let mut arr1 = Arr::<_, _, { &[2, 3][..] }>::from([3, 2, 1, 3, 2, -2]);
         let arr2 = Arr::from([1, 3, 8, -3, -4, -2]);
         let expected = Arr::from([3, 6, 8, -9, -8, 4]);
-        assert_eq!(arr1 * arr2, expected);
+        assert_eq!(arr1.clone() * arr2.clone(), expected);
+        arr1 *= arr2;
+        assert_eq!(arr1, expected);
     }
 
     #[test]
     fn div() {
-        let arr1 = Arr::<_, _, { &[2, 3][..] }>::from([3, 2, 1, 3, 2, -2]);
+        let mut arr1 = Arr::<_, _, { &[2, 3][..] }>::from([3, 2, 1, 3, 2, -2]);
         let arr2 = Arr::from([1, 3, 8, -3, -4, -2]);
         let expected = Arr::from([3, 2 / 3, 1 / 8, 3 / -3, 2 / (-4), (-2) / (-2)]);
-        assert_eq!(arr1 / arr2, expected);
+        assert_eq!(arr1.clone() / arr2.clone(), expected);
+        arr1 /= arr2;
+        assert_eq!(arr1, expected)
     }
 
     #[test]
     fn rem() {
-        let arr1 = Arr::<_, _, { &[2, 3][..] }>::from([3, 2, 1, 3, 2, -2]);
+        let mut arr1 = Arr::<_, _, { &[2, 3][..] }>::from([3, 2, 1, 3, 2, -2]);
         let arr2 = Arr::from([1, 3, 8, -3, -4, -2]);
         let expected = Arr::from([0, 2, 1, 3 % (-3), 2, (-2) % (-2)]);
-        assert_eq!(arr1 % arr2, expected);
+        assert_eq!(arr1.clone() % arr2.clone(), expected);
+        arr1 %= arr2;
+        assert_eq!(arr1, expected);
     }
 
     #[test]
