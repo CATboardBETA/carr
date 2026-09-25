@@ -1,3 +1,4 @@
+use std::marker::PhantomData;
 use crate::arr::Arr;
 use crate::backend::Backend;
 
@@ -52,6 +53,18 @@ where
     }
 }
 
+impl<B, T, const D: &'static [usize]> FromIterator<T> for Arr<B, T, D>
+where
+    B: Backend<T>,
+{
+    fn from_iter<I: IntoIterator<Item=T>>(iter: I) -> Self {
+        Arr {
+            storage: B::from_vec(iter.into_iter().collect:: < Vec<_ > > ()).unwrap(),
+            _phantom: PhantomData
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::arr::Arr;
@@ -62,6 +75,7 @@ mod test {
         let mut iter = arr.iter();
         assert_eq!(None, iter.next());
     }
+
     #[test]
     fn iter_2() {
         let arr = Arr::<[i32; 1], _, { &[1] }>::new_ones();
@@ -69,6 +83,7 @@ mod test {
         assert_eq!(Some(&1), iter.next());
         assert_eq!(None, iter.next());
     }
+
     #[test]
     fn iter_3() {
         let arr = Arr::<_, i32, { &[3] }>::from([1, 0, 1]);
@@ -77,5 +92,12 @@ mod test {
         assert_eq!(Some(&0), iter.next());
         assert_eq!(Some(&1), iter.next());
         assert_eq!(None, iter.next());
+    }
+
+    #[test]
+    fn from_iter() {
+        let v = vec![1, 2, 3, 4, 5].into_iter();
+        let expected = Arr::<_, _, { &[5] }>::from([1, 2, 3, 4, 5]);
+        assert_eq!(expected, v.collect::<Arr<Vec<_>, _, { &[5] }>>());
     }
 }
