@@ -1,6 +1,6 @@
-use std::marker::PhantomData;
 use crate::arr::Arr;
 use crate::backend::Backend;
+use std::marker::PhantomData;
 
 pub struct ArrIter<'a, B: Backend<T>, T, const D: &'static [usize]> {
     inner: &'a Arr<B, T, D>,
@@ -57,10 +57,10 @@ impl<B, T, const D: &'static [usize]> FromIterator<T> for Arr<B, T, D>
 where
     B: Backend<T>,
 {
-    fn from_iter<I: IntoIterator<Item=T>>(iter: I) -> Self {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         Arr {
-            storage: B::from_vec(iter.into_iter().collect:: < Vec<_ > > ()).unwrap(),
-            _phantom: PhantomData
+            storage: B::from_vec(iter.into_iter().collect::<Vec<_>>()).unwrap(),
+            _phantom: PhantomData,
         }
     }
 }

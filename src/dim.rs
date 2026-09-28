@@ -80,17 +80,16 @@ const UNSQUEEZE<const D: &'static [usize], const AT: usize>: [usize; ADD::<{ LEN
     let mut out = [0usize; ADD::<{ LEN::<D> }, 1>];
     let mut i = 0;
     let mut j = 0;
-    while i < LEN::<D> + 1{
+    while i < LEN::<D> + 1 {
         if i == AT {
             out[i] = 1;
-
         } else {
             out[i] = D[j];
             j += 1;
         }
         i += 1;
     }
-out
+    out
 };
 
 /// Dimension struct for unsqueezed arrays. Adds a dimension at `AT`, with one element.
@@ -99,7 +98,8 @@ impl<const D: &'static [usize], const AT: usize> Dimension for Unsqueeze<D, AT> 
     const DIMS: &'static [usize] = &UNSQUEEZE::<D, AT>;
 }
 
-const INDEX_ARR1<const D: &'static [usize], const AT: &'static [usize]>: [usize; SUB::<{ LEN::<D> }, { LEN::<AT> }> ] = {
+const INDEX_ARR1<const D: &'static [usize], const AT: &'static [usize]>: [usize;
+    SUB::<{ LEN::<D> }, { LEN::<AT> }>] = {
     if AT.is_empty() {
         *D.as_array().unwrap()
     } else {
@@ -113,4 +113,5 @@ const INDEX_ARR1<const D: &'static [usize], const AT: &'static [usize]>: [usize;
     }
 };
 
-pub(crate) const INDEX_ARR<const D: &'static [usize], const AT: &'static [usize]>: &[usize] = &INDEX_ARR1::<D, AT>;
+pub(crate) const INDEX_ARR<const D: &'static [usize], const AT: &'static [usize]>: &[usize] =
+    &INDEX_ARR1::<D, AT>;

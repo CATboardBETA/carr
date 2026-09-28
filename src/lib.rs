@@ -11,7 +11,7 @@
     unsized_const_params,
     adt_const_params,
     inherent_associated_types,
-    generic_const_items,
+    generic_const_items
 )]
 #![warn(clippy::pedantic)]
 #![warn(clippy::nursery)]

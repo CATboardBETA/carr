@@ -25,7 +25,13 @@ where
     for<'a> &'a T: Add<Output = T>,
 {
     fn add_assign(&mut self, rhs: Self) {
-        *self.storage_mut() = B::from_vec(self.iter().zip(rhs.iter()).map(|(l, r)| l + r).collect::<Vec<_>>()).unwrap();
+        *self.storage_mut() = B::from_vec(
+            self.iter()
+                .zip(rhs.iter())
+                .map(|(l, r)| l + r)
+                .collect::<Vec<_>>(),
+        )
+        .unwrap();
     }
 }
 
@@ -47,7 +53,13 @@ where
     for<'a> &'a T: Sub<Output = T>,
 {
     fn sub_assign(&mut self, rhs: Self) {
-        *self.storage_mut() = B::from_vec(self.iter().zip(rhs.iter()).map(|(l, r)| l - r).collect::<Vec<_>>()).unwrap();
+        *self.storage_mut() = B::from_vec(
+            self.iter()
+                .zip(rhs.iter())
+                .map(|(l, r)| l - r)
+                .collect::<Vec<_>>(),
+        )
+        .unwrap();
     }
 }
 
@@ -69,7 +81,13 @@ where
     for<'a> &'a T: Mul<Output = T>,
 {
     fn mul_assign(&mut self, rhs: Self) {
-        *self.storage_mut() = B::from_vec(self.iter().zip(rhs.iter()).map(|(l, r)| l * r).collect::<Vec<_>>()).unwrap();
+        *self.storage_mut() = B::from_vec(
+            self.iter()
+                .zip(rhs.iter())
+                .map(|(l, r)| l * r)
+                .collect::<Vec<_>>(),
+        )
+        .unwrap();
     }
 }
 
@@ -91,7 +109,13 @@ where
     for<'a> &'a T: Div<Output = T>,
 {
     fn div_assign(&mut self, rhs: Self) {
-        *self.storage_mut() = B::from_vec(self.iter().zip(rhs.iter()).map(|(l, r)| l / r).collect::<Vec<_>>()).unwrap();
+        *self.storage_mut() = B::from_vec(
+            self.iter()
+                .zip(rhs.iter())
+                .map(|(l, r)| l / r)
+                .collect::<Vec<_>>(),
+        )
+        .unwrap();
     }
 }
 
@@ -113,7 +137,13 @@ where
     for<'a> &'a T: Rem<Output = T>,
 {
     fn rem_assign(&mut self, rhs: Self) {
-        *self.storage_mut() = B::from_vec(self.iter().zip(rhs.iter()).map(|(l, r)| l % r).collect::<Vec<_>>()).unwrap();
+        *self.storage_mut() = B::from_vec(
+            self.iter()
+                .zip(rhs.iter())
+                .map(|(l, r)| l % r)
+                .collect::<Vec<_>>(),
+        )
+        .unwrap();
     }
 }
 
