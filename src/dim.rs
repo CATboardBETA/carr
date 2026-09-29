@@ -58,7 +58,8 @@ const UNSQUEEZE1<const D: &'static [usize], const AT: usize>: [usize; ADD::<{ LE
 };
 
 /// Dimension struct for unsqueezed arrays. Adds a dimension at `AT`, with one element.
-pub const UNSQUEEZE<const D: &'static [usize], const AT: usize>: &'static [usize] = &UNSQUEEZE1::<D, AT>;
+pub const UNSQUEEZE<const D: &'static [usize], const AT: usize>: &'static [usize] =
+    &UNSQUEEZE1::<D, AT>;
 
 const INDEX_ARR1<const D: &'static [usize], const AT: &'static [usize]>: [usize;
     SUB::<{ LEN::<D> }, { LEN::<AT> }>] = {

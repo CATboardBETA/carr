@@ -203,9 +203,7 @@ where
     }
 
     /// At an extra dimension at `AT`, with 1 position.
-    pub fn unsqueeze<const AT: usize>(
-        self,
-    ) -> Arr<B, T, { UNSQUEEZE::<D, AT> }> {
+    pub fn unsqueeze<const AT: usize>(self) -> Arr<B, T, { UNSQUEEZE::<D, AT> }> {
         self.reshape()
     }
 }
