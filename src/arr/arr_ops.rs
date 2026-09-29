@@ -3,7 +3,7 @@
 
 use crate::arr::Arr;
 use crate::backend::{Backend, BackendOps};
-use crate::dim::{Dimension, Squeeze, Transpose, Unsqueeze};
+use crate::dim::{SQUEEZE, TRANSPOSE, UNSQUEEZE};
 use std::marker::PhantomData;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
 
@@ -153,7 +153,7 @@ where
     T: Clone,
 {
     /// Transpose an array, reflecting along the primary diagonal.
-    pub fn transpose(self) -> Arr<B, T, { <Transpose<D> as Dimension>::DIMS }> {
+    pub fn transpose(self) -> Arr<B, T, { TRANSPOSE::<D> }> {
         const {
             assert!(D.len() == 2);
         }
@@ -171,7 +171,7 @@ where
     }
 
     /// Squeeze an array - equivalent to removing all extra dimension (where `D[n] == 1`)
-    pub fn squeeze(self) -> Arr<B, T, { <Squeeze<D> as Dimension>::DIMS }> {
+    pub fn squeeze(self) -> Arr<B, T, { SQUEEZE::<D> }> {
         // Just a reshape to specific dims.
         self.reshape()
     }
@@ -203,9 +203,7 @@ where
     }
 
     /// At an extra dimension at `AT`, with 1 position.
-    pub fn unsqueeze<const AT: usize>(
-        self,
-    ) -> Arr<B, T, { <Unsqueeze<D, AT> as Dimension>::DIMS }> {
+    pub fn unsqueeze<const AT: usize>(self) -> Arr<B, T, { UNSQUEEZE::<D, AT> }> {
         self.reshape()
     }
 }
