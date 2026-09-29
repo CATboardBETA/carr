@@ -4,39 +4,8 @@
 //! describing the final dimensions, given an input. See [`Dimension`] for more information and
 //! an example implementation.
 
-/// Implemented by all non-trivial Dimension structs.
-///
-/// To implement yourself, create a const with a const generic argument of type `&'static [usize]`.
-/// This represents the dimensions in. The const should return the output dimensions. Create a
-/// fieldless struct with a const generic parameter with type `&'static [usize]`, then implement
-/// [`Dimension`] on it.
-///
-/// Simple example:
-/// ```
-/// # #![feature(min_adt_const_params, adt_const_params, unsized_const_params, generic_const_items)]
-/// # #![expect(incomplete_features)]
-/// use carr::dim::Dimension;
-///
-/// const TRANSPOSE<const D: &'static [usize]>: &[usize] = &[D[1], D[0]];
-/// pub struct Transpose<const D: &'static [usize]>;
-///
-/// impl<const D: &'static [usize]> Dimension for Transpose<D> {
-///     const DIMS: &'static [usize] = TRANSPOSE::<D>;
-/// }
-/// ```
-pub trait Dimension {
-    /// Output dimensions of the implementor.
-    const DIMS: &'static [usize];
-}
-
 /// Dimension struct for transposed 2D arrays. Simply flips first and second dimension.
-pub struct Transpose<const D: &'static [usize]>;
-
-const TRANSPOSE<const D: &'static [usize]>: &[usize] = &[D[1], D[0]];
-
-impl<const D: &'static [usize]> Dimension for Transpose<D> {
-    const DIMS: &'static [usize] = TRANSPOSE::<D>;
-}
+pub const TRANSPOSE<const D: &'static [usize]>: &[usize] = &[D[1], D[0]];
 
 const LEN<const OF: &'static [usize]>: usize = OF.len();
 const ADD<const X: usize, const Y: usize>: usize = X + Y;
@@ -66,16 +35,12 @@ const SQUEEZE1<const D: &'static [usize]>: ([usize; LEN::<D>], usize) = {
     }
     (out, since_last)
 };
-const SQUEEZE<const D: &'static [usize]>: &[usize] = &SQUEEZE1::<D>.0[0..SQUEEZE1::<D>.1];
 
 /// Dimension struct for an array that has been squeezed. Simply removes all dimensions that have
 /// only one element.
-pub struct Squeeze<const D: &'static [usize]>;
-impl<const D: &'static [usize]> Dimension for Squeeze<D> {
-    const DIMS: &'static [usize] = SQUEEZE::<D>;
-}
+pub const SQUEEZE<const D: &'static [usize]>: &[usize] = &SQUEEZE1::<D>.0[0..SQUEEZE1::<D>.1];
 
-const UNSQUEEZE<const D: &'static [usize], const AT: usize>: [usize; ADD::<{ LEN::<D> }, 1>] = {
+const UNSQUEEZE1<const D: &'static [usize], const AT: usize>: [usize; ADD::<{ LEN::<D> }, 1>] = {
     assert!(D.len() + 1 > AT);
     let mut out = [0usize; ADD::<{ LEN::<D> }, 1>];
     let mut i = 0;
@@ -93,10 +58,7 @@ const UNSQUEEZE<const D: &'static [usize], const AT: usize>: [usize; ADD::<{ LEN
 };
 
 /// Dimension struct for unsqueezed arrays. Adds a dimension at `AT`, with one element.
-pub struct Unsqueeze<const D: &'static [usize], const AT: usize>;
-impl<const D: &'static [usize], const AT: usize> Dimension for Unsqueeze<D, AT> {
-    const DIMS: &'static [usize] = &UNSQUEEZE::<D, AT>;
-}
+pub const UNSQUEEZE<const D: &'static [usize], const AT: usize>: &'static [usize] = &UNSQUEEZE1::<D, AT>;
 
 const INDEX_ARR1<const D: &'static [usize], const AT: &'static [usize]>: [usize;
     SUB::<{ LEN::<D> }, { LEN::<AT> }>] = {
