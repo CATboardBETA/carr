@@ -1,10 +1,10 @@
-//! Dimension structs.
+//! Dimension constants.
 //!
-//! These work by implementing [`Dimension`], which has an associated constant
-//! describing the final dimensions, given an input. See [`Dimension`] for more information and
-//! an example implementation.
+//! These work by implementing a constant for each modification to dimensions
+//! which creates a new static slice at compile time using const expressions.
+//! Look at [`TRANSPOSE`] for an example on how this is implemented.
 
-/// Dimension struct for transposed 2D arrays. Simply flips first and second dimension.
+/// Dimension constant for transposed 2D arrays. Simply flips first and second dimension.
 pub const TRANSPOSE<const D: &'static [usize]>: &[usize] = &[D[1], D[0]];
 
 const LEN<const OF: &'static [usize]>: usize = OF.len();
@@ -36,7 +36,7 @@ const SQUEEZE1<const D: &'static [usize]>: ([usize; LEN::<D>], usize) = {
     (out, since_last)
 };
 
-/// Dimension struct for an array that has been squeezed. Simply removes all dimensions that have
+/// Dimension constant for an array that has been squeezed. Simply removes all dimensions that have
 /// only one element.
 pub const SQUEEZE<const D: &'static [usize]>: &[usize] = &SQUEEZE1::<D>.0[0..SQUEEZE1::<D>.1];
 
@@ -57,7 +57,7 @@ const UNSQUEEZE1<const D: &'static [usize], const AT: usize>: [usize; ADD::<{ LE
     out
 };
 
-/// Dimension struct for unsqueezed arrays. Adds a dimension at `AT`, with one element.
+/// Dimension constant for unsqueezed arrays. Adds a dimension at `AT`, with one element.
 pub const UNSQUEEZE<const D: &'static [usize], const AT: usize>: &'static [usize] =
     &UNSQUEEZE1::<D, AT>;
 
