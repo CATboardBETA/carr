@@ -33,9 +33,12 @@ pub trait Backend<T>:
     /// Creates a [`Vec<T>`] from a backend, consuming the underlying storage.
     #[must_use]
     fn into_vec(self) -> Vec<T>;
-    /// Creates a [`Vec<T>`] from a backend, without consuming the underlying storage.
+    /// Creates a [`Vec<&T>`] from a backend, without consuming the underlying storage.
     #[must_use]
     fn as_vec(&self) -> Vec<&T>;
+    /// Creates a [`Vec<&mut T>`] from a backend, without consuming the underlying storage.
+    #[must_use]
+    fn as_vec_mut(&mut self) -> Vec<&mut T>;
 }
 
 /// Implemented for [backends](Backend) that can have operations applied to them. This is required
@@ -79,6 +82,10 @@ impl<T: Clone, const N: usize> Backend<T> for [T; N] {
     fn as_vec(&self) -> Vec<&T> {
         self.iter().collect_vec()
     }
+
+    fn as_vec_mut(&mut self) -> Vec<&mut T> {
+        self.iter_mut().collect_vec()
+    }
 }
 
 impl<T: Clone, const N: usize> BackendOps<T> for [T; N] {
@@ -111,6 +118,10 @@ impl<T: Clone> Backend<T> for Vec<T> {
 
     fn as_vec(&self) -> Vec<&T> {
         self.iter().collect_vec()
+    }
+
+    fn as_vec_mut(&mut self) -> Vec<&mut T> {
+        self.iter_mut().collect_vec()
     }
 }
 

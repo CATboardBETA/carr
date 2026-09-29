@@ -7,6 +7,10 @@ pub struct ArrIter<'a, B: Backend<T>, T, const D: &'static [usize]> {
     at: usize,
 }
 
+pub struct ArrIterMut<'a, T> {
+    inner: Vec<&'a mut T>,
+}
+
 impl<'a, B: Backend<T>, T: 'a, const D: &'static [usize]> Iterator for ArrIter<'a, B, T, D> {
     type Item = &'a T;
 
@@ -18,6 +22,14 @@ impl<'a, B: Backend<T>, T: 'a, const D: &'static [usize]> Iterator for ArrIter<'
         };
         self.at += 1;
         ret
+    }
+}
+
+impl<'a, T: 'a> Iterator for ArrIterMut<'a, T> {
+    type Item = &'a mut T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.pop()
     }
 }
 
@@ -38,6 +50,11 @@ where
     pub fn iter(&'a self) -> ArrIter<'a, B, T, D> {
         self.into_iter()
     }
+
+    /// Iterate by exclusive (mutable) reference over an [`Arr`]'s internal storage.
+    pub fn iter_mut(&'a mut self) -> ArrIterMut<'a, T> {
+        self.into_iter()
+    }
 }
 
 impl<'a, B, T, const D: &'static [usize]> IntoIterator for &'a Arr<B, T, D>
@@ -50,6 +67,27 @@ where
 
     fn into_iter(self) -> Self::IntoIter {
         ArrIter { inner: self, at: 0 }
+    }
+
+}
+
+
+impl<'a, B, T, const D: &'static [usize]> IntoIterator for &'a mut Arr<B, T, D>
+where
+    B: Backend<T> + 'a,
+    T: 'a,
+{
+    type Item = &'a mut T;
+    type IntoIter = ArrIterMut<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let mut inner = self
+                .storage
+                .as_vec_mut();
+        inner.reverse();
+        ArrIterMut {
+            inner
+        }
     }
 }
 
@@ -99,5 +137,19 @@ mod test {
         let v = vec![1, 2, 3, 4, 5].into_iter();
         let expected = Arr::<_, _, { &[5] }>::from([1, 2, 3, 4, 5]);
         assert_eq!(expected, v.collect::<Arr<Vec<_>, _, { &[5] }>>());
+    }
+
+    #[test]
+    fn iter_mut() {
+        let mut arr = Arr::<_, _, { &[5] }>::from([1, 2, 3, 4, 5]);
+        for x in &mut arr {
+            *x = if *x > 3 {
+                0
+            } else {
+                *x
+            }
+        }
+        let expected = Arr::<_, _, { &[5] }>::from([1, 2, 3, 0, 0]);
+        assert_eq!(arr, expected);
     }
 }
