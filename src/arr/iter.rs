@@ -58,7 +58,7 @@ where
     B: Backend<T>,
 {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
-        Arr {
+        Self {
             storage: B::from_vec(iter.into_iter().collect::<Vec<_>>()).unwrap(),
             _phantom: PhantomData,
         }
@@ -71,7 +71,7 @@ mod test {
 
     #[test]
     fn iter_1() {
-        let arr = Arr::<[i32; 0], _, { &[0] }>::new();
+        let arr = Arr::<[i32; 0], _, { &[0] }>::new(&1);
         let mut iter = arr.iter();
         assert_eq!(None, iter.next());
     }

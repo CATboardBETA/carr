@@ -35,13 +35,14 @@ mod iter;
 /// println!("{arr}")
 /// ```
 ///
-/// Create a multidimensional array of any type implementing [`Default`]
+/// Create a multidimensional array of any type implementing [`Default`] `+` [`Clone`]. Note that
+/// this is equivalent to [`Arr::default`].
 /// ```
-/// # #![feature(min_adt_const_params, adt_const_params, min_generic_const_args, generic_const_args, unsized_const_params, generic_const_items)]
+/// # #![feature(min_adt_const_params, adt_const_params, gca_min_const_items, gca_const_items, unsized_const_params, generic_const_items)]
 /// # #![expect(incomplete_features)]
 /// # use carr::arr::Arr;
-/// fn new_2d<T: Default, const D: &'static [usize]>() -> Arr<Vec<T>, T, D> {
-///     Arr::new()
+/// fn new_2d<T: Clone + Default, const D: &'static [usize]>() -> Arr<Vec<T>, T, D> {
+///     Arr::new(&T::default())
 /// }
 /// ```
 pub struct Arr<B, T, const DIMS: &'static [usize]>
@@ -69,14 +70,13 @@ where
 /// Functions expressible generically for ALL const arrays
 impl<B, T, const D: &'static [usize]> Arr<B, T, D>
 where
-    T: Default,
     B: Backend<T>,
 {
     /// Create a new [`Arr`], with dimensions specified by `D`.
     #[must_use]
-    pub fn new() -> Self {
+    pub fn new(x: &T) -> Self {
         Self {
-            storage: B::new_bck::<{ TOTAL_DIM::<D> }>(),
+            storage: B::new_bck::<{ TOTAL_DIM::<D> }>(x),
             _phantom: PhantomData,
         }
     }
@@ -103,7 +103,7 @@ where
     B: Backend<T>,
 {
     fn default() -> Self {
-        Self::new()
+        Self::new(&T::default())
     }
 }
 
@@ -225,7 +225,7 @@ mod test {
 
     #[test]
     fn new() {
-        let arr = Arr::<Vec<_>, (), { &[1, 2, 4] }>::new();
+        let arr = Arr::<Vec<_>, (), { &[1, 2, 4] }>::new(&());
         assert_eq!(arr.storage().len(), 8);
     }
 

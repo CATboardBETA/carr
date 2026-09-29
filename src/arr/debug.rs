@@ -9,7 +9,7 @@ use std::fmt::{Debug, Display, Formatter};
 impl<B, T, const D: &'static [usize]> Display for Arr<B, T, D>
 where
     B: Backend<T> + IntoIterator<Item = T> + Clone,
-    T: Default + Display,
+    T: Display,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let mut dims_left = D.len();

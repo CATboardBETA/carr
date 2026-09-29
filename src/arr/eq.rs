@@ -18,16 +18,13 @@ where
 impl<B, T, const D: &'static [usize]> Arr<B, T, D>
 where
     B: Backend<T>,
-    T: PartialOrd,
+    T: PartialOrd + Clone,
 {
     /// Compare two arrays elementwise. This should be used when all three `Orderings` are used, not
     /// to do simple comparisons e.g. `x < y`. If doing basic comparisons, use the other associated
     /// methods, e.g. [`Arr::lt`]
     #[must_use]
-    pub fn partial_cmp<B2: Backend<Option<Ordering>>>(
-        &self,
-        other: &Self,
-    ) -> Arr<B2, Option<Ordering>, D> {
+    pub fn partial_cmp(&self, other: &Self) -> Arr<Vec<Option<Ordering>>, Option<Ordering>, D> {
         self.iter()
             .zip(other)
             .map(|(x, y)| x.partial_cmp(y))
@@ -39,7 +36,7 @@ where
     ///
     /// Stored in a bool array with the same dimensions as the input.
     #[must_use]
-    pub fn lt<B2: Backend<bool>>(&self, other: &Self) -> Arr<B2, bool, D> {
+    pub fn lt(&self, other: &Self) -> Arr<Vec<bool>, bool, D> {
         self.iter().zip(other).map(|(x, y)| x < y).collect()
     }
 
@@ -48,7 +45,7 @@ where
     ///
     /// Stored in a bool array with the same dimensions as the input.
     #[must_use]
-    pub fn le<B2: Backend<bool>>(&self, other: &Self) -> Arr<B2, bool, D> {
+    pub fn le(&self, other: &Self) -> Arr<Vec<bool>, bool, D> {
         self.iter().zip(other).map(|(x, y)| x <= y).collect()
     }
 
@@ -57,7 +54,7 @@ where
     ///
     /// Stored in a bool array with the same dimensions as the input.
     #[must_use]
-    pub fn gt<B2: Backend<bool>>(&self, other: &Self) -> Arr<B2, bool, D> {
+    pub fn gt(&self, other: &Self) -> Arr<Vec<bool>, bool, D> {
         self.iter().zip(other).map(|(x, y)| x > y).collect()
     }
 
@@ -66,8 +63,8 @@ where
     ///
     /// Stored in a bool array with the same dimensions as the input.
     #[must_use]
-    pub fn ge<B2: Backend<bool>>(&self, other: &Self) -> Arr<B2, bool, D> {
-        self.iter().zip(other).map(|(x, y)| x <= y).collect()
+    pub fn ge(&self, other: &Self) -> Arr<Vec<bool>, bool, D> {
+        self.iter().zip(other).map(|(x, y)| x >= y).collect()
     }
 
     /// Checks if the first element of `self` is equal to the first element of `other`, the second
@@ -75,7 +72,7 @@ where
     ///
     /// Stored in a bool array with the same dimensions as the input.
     #[must_use]
-    pub fn eq<B2: Backend<bool>>(&self, other: &Self) -> Arr<B2, bool, D> {
+    pub fn eq(&self, other: &Self) -> Arr<Vec<bool>, bool, D> {
         self.iter().zip(other).map(|(x, y)| x == y).collect()
     }
 
@@ -84,7 +81,7 @@ where
     ///
     /// Stored in a bool array with the same dimensions as the input.
     #[must_use]
-    pub fn ne<B2: Backend<bool>>(&self, other: &Self) -> Arr<B2, bool, D> {
+    pub fn ne(&self, other: &Self) -> Arr<Vec<bool>, bool, D> {
         self.iter().zip(other).map(|(x, y)| x != y).collect()
     }
 }
@@ -101,7 +98,7 @@ where
     // `allow` because I am intentionally trying to look like the [`Ord`] method
     #[must_use]
     #[allow(clippy::should_implement_trait)]
-    pub fn cmp<B2: Backend<Ordering>>(&self, other: &Self) -> Arr<B2, Ordering, D> {
+    pub fn cmp(&self, other: &Self) -> Arr<Vec<Ordering>, Ordering, D> {
         self.iter().zip(other).map(|(x, y)| x.cmp(y)).collect()
     }
 
@@ -110,10 +107,7 @@ where
     /// Note that this returns an array of references, as opposed to just `T`. If T has a trivial
     /// [`Clone`] implementation, consider using [`Self::max_cloned`] instead.
     #[must_use]
-    pub fn max<'a, B2>(&'a self, other: &'a Self) -> Arr<B2, &'a T, D>
-    where
-        B2: Backend<&'a T>,
-    {
+    pub fn max<'a>(&'a self, other: &'a Self) -> Arr<Vec<&'a T>, &'a T, D> {
         self.iter().zip(other).map(|(x, y)| x.max(y)).collect()
     }
 
@@ -135,10 +129,7 @@ where
     /// Note that this returns an array of references, as opposed to just `T`. If T has a trivial
     /// [`Clone`] implementation, consider using [`Self::min_cloned`] instead.
     #[must_use]
-    pub fn min<'a, B2>(&'a self, other: &'a Self) -> Arr<B2, &'a T, D>
-    where
-        B2: Backend<&'a T>,
-    {
+    pub fn min<'a>(&'a self, other: &'a Self) -> Arr<Vec<&'a T>, &'a T, D> {
         self.iter().zip(other).map(|(x, y)| x.min(y)).collect()
     }
 
@@ -160,10 +151,7 @@ where
     /// Note that this returns an array of references. If T has a trivial [`Clone`] implementation,
     /// consider using [`Self::clamp_cloned`] instead.
     #[must_use]
-    pub fn clamp<'a, B2>(&'a self, start: &'a T, end: &'a T) -> Arr<B2, &'a T, D>
-    where
-        B2: Backend<&'a T>,
-    {
+    pub fn clamp<'a>(&'a self, start: &'a T, end: &'a T) -> Arr<Vec<&'a T>, &'a T, D> {
         self.iter()
             .map(|x| {
                 if x < start {
@@ -179,21 +167,112 @@ where
 
     /// Equivalent to [`Self::clamp`], but clones each element after clamping.
     #[must_use]
-    pub fn clamp_cloned(&self, start: T, end: T) -> Self
+    pub fn clamp_cloned(&self, start: &T, end: &T) -> Self
     where
         T: Clone,
     {
         self.iter()
             .map(|x| {
-                if x < &start {
-                    &start
-                } else if x > &end {
-                    &end
+                if x < start {
+                    start
+                } else if x > end {
+                    end
                 } else {
                     x
                 }
             })
             .cloned()
             .collect()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::arr::Arr;
+    use std::cmp::Ordering;
+
+    #[test]
+    fn partial_cmp_1() {
+        let a = Arr::<_, _, { &[3] }>::from([1, 2, 3]);
+        let b = Arr::<_, _, { &[3] }>::from([3, 2, 1]);
+        let expect = Arr::<_, _, { &[3] }>::from([
+            Some(Ordering::Less),
+            Some(Ordering::Equal),
+            Some(Ordering::Greater),
+        ]);
+        // Cannot use assert_eq here due to `Ordering` not implementing `Display`
+        assert!(a.partial_cmp(&b) == expect);
+    }
+    #[test]
+    fn partial_cmp_2() {
+        let a = Arr::<_, _, { &[3] }>::from([f32::NAN, 3., 1.]);
+        let b = Arr::<_, _, { &[3] }>::from([3., 2., f32::NAN]);
+        let expect = Arr::<_, _, { &[3] }>::from([None, Some(Ordering::Greater), None]);
+        assert!(a.partial_cmp(&b) == expect);
+    }
+
+    #[test]
+    fn partial_cmp_ops() {
+        let a = Arr::<_, _, { &[3] }>::from([1., 2., 3.]);
+        let b = Arr::<_, _, { &[3] }>::from([3., 2., 1.]);
+        let lt = Arr::<_, _, { &[3] }>::from([true, false, false]);
+        let le = Arr::<_, _, { &[3] }>::from([true, true, false]);
+        let eq = Arr::<_, _, { &[3] }>::from([false, true, false]);
+        let gt = Arr::<_, _, { &[3] }>::from([false, false, true]);
+        let ge = Arr::<_, _, { &[3] }>::from([false, true, true]);
+        let ne = Arr::<_, _, { &[3] }>::from([true, false, true]);
+        assert_eq!(a.lt(&b), lt);
+        assert_eq!(a.le(&b), le);
+        assert_eq!(a.eq(&b), eq);
+        assert_eq!(a.gt(&b), gt);
+        assert_eq!(a.ge(&b), ge);
+        assert_eq!(a.ne(&b), ne);
+    }
+
+    #[test]
+    fn total_cmp() {
+        let a = Arr::<_, _, { &[3] }>::from([1, 2, 3]);
+        let b = Arr::<_, _, { &[3] }>::from([3, 2, 1]);
+        assert!(
+            a.partial_cmp(&b)
+                .iter()
+                .map(|x| x.unwrap())
+                .collect::<Arr<Vec<_>, _, _>>()
+                == a.cmp(&b)
+        );
+    }
+
+    #[test]
+    fn min_max_ref() {
+        let a = Arr::<_, _, { &[3] }>::from([1, 2, 3]);
+        let b = Arr::<_, _, { &[3] }>::from([3, 2, 1]);
+        let min = Arr::<_, _, { &[3] }>::from([&1, &2, &1]);
+        let max = Arr::<_, _, { &[3] }>::from([&3, &2, &3]);
+        assert!(a.min(&b) == min);
+        assert!(a.max(&b) == max);
+    }
+
+    #[test]
+    fn min_max() {
+        let a = Arr::<_, _, { &[3] }>::from([1, 2, 3]);
+        let b = Arr::<_, _, { &[3] }>::from([3, 2, 1]);
+        let min = Arr::<_, _, { &[3] }>::from([1, 2, 1]);
+        let max = Arr::<_, _, { &[3] }>::from([3, 2, 3]);
+        assert_eq!(a.min_cloned(&b), min);
+        assert_eq!(a.max_cloned(&b), max);
+    }
+
+    #[test]
+    fn clamp_ref() {
+        let a = Arr::<_, _, { &[5] }>::from([1, 2, 3, 4, 5]);
+        let expect = Arr::<_, _, { &[5] }>::from([&2, &2, &3, &4, &4]);
+        assert!(a.clamp(&2, &4) == expect);
+    }
+
+    #[test]
+    fn clamp() {
+        let a = Arr::<_, _, { &[5] }>::from([1, 2, 3, 4, 5]);
+        let expect = Arr::<_, _, { &[5] }>::from([2, 2, 3, 4, 4]);
+        assert_eq!(a.clamp_cloned(&2, &4), expect);
     }
 }

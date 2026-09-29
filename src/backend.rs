@@ -22,7 +22,7 @@ pub trait Backend<T>:
 {
     /// Creates a new, empty instance of the backend.
     #[must_use]
-    fn new_bck<const N: usize>() -> Self;
+    fn new_bck<const N: usize>(x: &T) -> Self;
     /// Create an instance of this backend from a [`Vec<T>`].
     #[must_use]
     fn from_vec(v: Vec<T>) -> Option<Self>;
@@ -56,9 +56,9 @@ pub trait BackendOps<T>: Backend<T> + IntoIterator<Item = T> {
 }
 
 /// TODO: Remove bound on `T`. `MaybeUninit` perhaps?
-impl<T: Default + Clone, const N: usize> Backend<T> for [T; N] {
-    fn new_bck<const N2: usize>() -> [T; N] {
-        array::from_fn::<_, N2, _>(|_| T::default())
+impl<T: Clone, const N: usize> Backend<T> for [T; N] {
+    fn new_bck<const N2: usize>(v: &T) -> [T; N] {
+        array::from_fn::<_, N2, _>(|_| v.clone())
             .as_array()
             .cloned()
             .unwrap()
@@ -81,7 +81,7 @@ impl<T: Default + Clone, const N: usize> Backend<T> for [T; N] {
     }
 }
 
-impl<T: Default + Clone, const N: usize> BackendOps<T> for [T; N] {
+impl<T: Clone, const N: usize> BackendOps<T> for [T; N] {
     fn apply_ops<B2, B3, F>(self, other: B2, op: F) -> B3
     where
         B2: Backend<T> + BackendOps<T>,
@@ -92,9 +92,9 @@ impl<T: Default + Clone, const N: usize> BackendOps<T> for [T; N] {
     }
 }
 
-impl<T: Default> Backend<T> for Vec<T> {
-    fn new_bck<const N: usize>() -> Self {
-        Self::from_fn(N, |_| T::default())
+impl<T: Clone> Backend<T> for Vec<T> {
+    fn new_bck<const N: usize>(x: &T) -> Self {
+        Self::from_fn(N, |_| x.clone())
     }
 
     fn from_vec(v: Self) -> Option<Self> {
@@ -114,7 +114,7 @@ impl<T: Default> Backend<T> for Vec<T> {
     }
 }
 
-impl<T: Default> BackendOps<T> for Vec<T> {
+impl<T: Clone> BackendOps<T> for Vec<T> {
     fn apply_ops<B2, B3, F>(self, other: B2, op: F) -> B3
     where
         B2: Backend<T> + BackendOps<T>,

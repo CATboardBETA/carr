@@ -251,7 +251,7 @@ mod test {
         let expected = Arr::from([3, 2 / 3, 1 / 8, 3 / -3, 2 / (-4), (-2) / (-2)]);
         assert_eq!(arr1.clone() / arr2.clone(), expected);
         arr1 /= arr2;
-        assert_eq!(arr1, expected)
+        assert_eq!(arr1, expected);
     }
 
     #[test]
