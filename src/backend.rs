@@ -8,6 +8,7 @@ use rand::RngExt;
 use rand::distr::uniform::SampleUniform;
 use std::array;
 use std::ops::{Index, IndexMut, Range};
+use bytemuck::Pod;
 
 /// A storage backend for arrays. This does not store the dimensions, and can be a variable-length
 /// type (e.g. a [`Vec`]).
@@ -39,6 +40,10 @@ pub trait Backend<T>:
     /// Creates a [`Vec<&mut T>`] from a backend, without consuming the underlying storage.
     #[must_use]
     fn as_vec_mut(&mut self) -> Vec<&mut T>;
+    #[must_use]
+    fn as_split<const X: usize, const Y: usize>(&self) -> &[[T; X]; Y]
+    where
+        T: Pod;
 }
 
 /// Implemented for [backends](Backend) that can have operations applied to them. This is required
@@ -86,6 +91,16 @@ impl<T: Clone, const N: usize> Backend<T> for [T; N] {
     fn as_vec_mut(&mut self) -> Vec<&mut T> {
         self.iter_mut().collect_vec()
     }
+
+    fn as_split<const X: usize, const Y: usize>(&self) -> &[[T; X]; Y]
+    where
+        T: Pod
+    {
+        const {
+            assert!(X * Y == N);
+        }
+        bytemuck::must_cast_ref(self)
+    }
 }
 
 impl<T: Clone, const N: usize> BackendOps<T> for [T; N] {
@@ -122,6 +137,13 @@ impl<T: Clone> Backend<T> for Vec<T> {
 
     fn as_vec_mut(&mut self) -> Vec<&mut T> {
         self.iter_mut().collect_vec()
+    }
+
+    fn as_split<const X: usize, const Y: usize>(&self) -> &[[T; X]; Y]
+    where
+        T: Pod
+    { 
+        bytemuck::cast_ref(self.as_array::<{ crate::dim::PROD::<X, Y> }>().unwrap())
     }
 }
 
