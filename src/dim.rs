@@ -10,6 +10,8 @@ pub const TRANSPOSE<const D: &'static [usize]>: &[usize] = &[D[1], D[0]];
 const LEN<const OF: &'static [usize]>: usize = OF.len();
 const ADD<const X: usize, const Y: usize>: usize = X + Y;
 const SUB<const X: usize, const Y: usize>: usize = X - Y;
+pub(crate) const PROD<const A: usize, const B: usize>: usize = A * B;
+
 pub(crate) const TOTAL_DIM<const D: &'static [usize]>: usize = {
     let mut i = 0;
     let mut total = 1;
@@ -78,3 +80,23 @@ const INDEX_ARR1<const D: &'static [usize], const AT: &'static [usize]>: [usize;
 
 pub(crate) const INDEX_ARR<const D: &'static [usize], const AT: &'static [usize]>: &[usize] =
     &INDEX_ARR1::<D, AT>;
+
+const REMOVE_DIM1<const D: &'static [usize], const AT: usize>: ([usize; SUB::<{ LEN::<D> }, 1>], usize) = {
+    let mut new_d = [0; SUB::<{ LEN::<D> }, 1>];
+    let mut i = 0;
+    let mut j = 0;
+    let mut removed_d = 0;
+    while i < D.len() {
+        if i == AT {
+            removed_d = D[j];
+        } else {
+            new_d[i] = D[j];
+            j += 1;
+        }
+        i += 1;
+    }
+    (new_d, removed_d)
+};
+
+pub const REMOVE_DIM<const D: &'static [usize], const AT: usize>: &[usize] = &REMOVE_DIM1::<D, AT>.0;
+pub const REMOVE_DIM_EXTRA<const D: &'static [usize], const AT: usize>: usize = REMOVE_DIM1::<D, AT>.1;
