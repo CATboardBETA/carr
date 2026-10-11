@@ -10,4 +10,4 @@ authors = ["CATboardBETA"]
 
 [workspace]
 resolver = "3"
-members = ["carr-main"]
+members = ["carr-main",]

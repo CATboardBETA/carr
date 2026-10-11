@@ -52,6 +52,14 @@ where
     }
 }
 
+#[macro_export]
+macro_rules! ix {
+    ($x:expr => [$($indices:expr),*]) => {
+        {
+            $crate::arr::index::IndexConstSlice::<{ &[$($indices)*] }>::index(&$x)
+        }
+    };
+}
 #[cfg(test)]
 mod test {
     use super::*;
@@ -87,5 +95,21 @@ mod test {
         let expected = Some(Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]));
         let x = IndexConstSlice::<{ &[] }>::try_index(&arr1);
         assert!(x.zip(expected).is_some_and(|(x, y)| x == y));
+    }
+
+    #[test]
+    fn index_macro_1() {
+        let arr1 = Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]);
+        let expected = Arr::<_, _, { &[3] }>::from([3, 2, 1]);
+        let x = crate::ix!(arr1 => [0]);
+        assert_eq!(x, expected);
+    }
+
+    #[test]
+    fn index_macro_2() {
+        let arr1 = Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]);
+        let expected = Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]);
+        let x = crate::ix!(arr1 => []);
+        assert_eq!(x, expected);
     }
 }
