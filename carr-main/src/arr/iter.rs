@@ -68,9 +68,7 @@ where
     fn into_iter(self) -> Self::IntoIter {
         ArrIter { inner: self, at: 0 }
     }
-
 }
-
 
 impl<'a, B, T, const D: &'static [usize]> IntoIterator for &'a mut Arr<B, T, D>
 where
@@ -81,13 +79,9 @@ where
     type IntoIter = ArrIterMut<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        let mut inner = self
-                .storage
-                .as_vec_mut();
+        let mut inner = self.storage.as_vec_mut();
         inner.reverse();
-        ArrIterMut {
-            inner
-        }
+        ArrIterMut { inner }
     }
 }
 
@@ -143,11 +137,7 @@ mod test {
     fn iter_mut() {
         let mut arr = Arr::<_, _, { &[5] }>::from([1, 2, 3, 4, 5]);
         for x in &mut arr {
-            *x = if *x > 3 {
-                0
-            } else {
-                *x
-            }
+            *x = if *x > 3 { 0 } else { *x }
         }
         let expected = Arr::<_, _, { &[5] }>::from([1, 2, 3, 0, 0]);
         assert_eq!(arr, expected);

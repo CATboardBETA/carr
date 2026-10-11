@@ -60,8 +60,7 @@ const UNSQUEEZE1<const D: &'static [usize], const AT: usize>: [usize; ADD::<{ LE
 };
 
 /// Dimension constant for unsqueezed arrays. Adds a dimension at `AT`, with one element.
-pub const UNSQUEEZE<const D: &'static [usize], const AT: usize>: &[usize] =
-    &UNSQUEEZE1::<D, AT>;
+pub const UNSQUEEZE<const D: &'static [usize], const AT: usize>: &[usize] = &UNSQUEEZE1::<D, AT>;
 
 const INDEX_ARR1<const D: &'static [usize], const AT: &'static [usize]>: [usize;
     SUB::<{ LEN::<D> }, { LEN::<AT> }>] = {
@@ -81,7 +80,10 @@ const INDEX_ARR1<const D: &'static [usize], const AT: &'static [usize]>: [usize;
 pub(crate) const INDEX_ARR<const D: &'static [usize], const AT: &'static [usize]>: &[usize] =
     &INDEX_ARR1::<D, AT>;
 
-const REMOVE_DIM1<const D: &'static [usize], const AT: usize>: ([usize; SUB::<{ LEN::<D> }, 1>], usize) = {
+const REMOVE_DIM1<const D: &'static [usize], const AT: usize>: (
+    [usize; SUB::<{ LEN::<D> }, 1>],
+    usize,
+) = {
     let mut new_d = [0; SUB::<{ LEN::<D> }, 1>];
     let mut i = 0;
     let mut j = 0;
@@ -98,5 +100,7 @@ const REMOVE_DIM1<const D: &'static [usize], const AT: usize>: ([usize; SUB::<{ 
     (new_d, removed_d)
 };
 
-pub const REMOVE_DIM<const D: &'static [usize], const AT: usize>: &[usize] = &REMOVE_DIM1::<D, AT>.0;
-pub const REMOVE_DIM_EXTRA<const D: &'static [usize], const AT: usize>: usize = REMOVE_DIM1::<D, AT>.1;
+pub const REMOVE_DIM<const D: &'static [usize], const AT: usize>: &[usize] =
+    &REMOVE_DIM1::<D, AT>.0;
+pub const REMOVE_DIM_EXTRA<const D: &'static [usize], const AT: usize>: usize =
+    REMOVE_DIM1::<D, AT>.1;

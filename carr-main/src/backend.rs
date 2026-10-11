@@ -1,6 +1,7 @@
 //! Backend storage, internal to [`arr::Arr`](crate::arr::Arr). Also contains a trait for numerical
 //! types (e.g. i32, f64, u8, etc.)
 
+use bytemuck::Pod;
 use itertools::Itertools;
 #[cfg(feature = "rand")]
 use rand::RngExt;
@@ -8,7 +9,6 @@ use rand::RngExt;
 use rand::distr::uniform::SampleUniform;
 use std::array;
 use std::ops::{Index, IndexMut, Range};
-use bytemuck::Pod;
 
 /// A storage backend for arrays. This does not store the dimensions, and can be a variable-length
 /// type (e.g. a [`Vec`]).
@@ -94,7 +94,7 @@ impl<T: Clone, const N: usize> Backend<T> for [T; N] {
 
     fn as_split<const X: usize, const Y: usize>(&self) -> &[[T; X]; Y]
     where
-        T: Pod
+        T: Pod,
     {
         const {
             assert!(X * Y == N);
@@ -141,8 +141,8 @@ impl<T: Clone> Backend<T> for Vec<T> {
 
     fn as_split<const X: usize, const Y: usize>(&self) -> &[[T; X]; Y]
     where
-        T: Pod
-    { 
+        T: Pod,
+    {
         bytemuck::cast_ref(self.as_array::<{ crate::dim::PROD::<X, Y> }>().unwrap())
     }
 }
