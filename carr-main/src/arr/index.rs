@@ -53,10 +53,21 @@ where
 }
 
 #[macro_export]
+/// Shorthand for indexing an array.
+///
+/// The expression `ix!(a => [b, c])` is equivalent to
+/// [`IndexConstSlice::<{ &[b, c] }>::index(a)`](IndexConstSlice::index). Likewise, the expression
+/// `ix!(a => try [b, c])` is equivalent to
+/// [`IndexConstSlice::<{ &[b, c] }>::try_index(a)`](IndexConstSlice::try_index).
 macro_rules! ix {
     ($x:expr => [$($indices:expr),*]) => {
         {
-            $crate::arr::index::IndexConstSlice::<{ &[$($indices)*] }>::index(&$x)
+            $crate::arr::index::IndexConstSlice::<{ &[$($indices),*] }>::index(&$x)
+        }
+    };
+    ($x:expr => try [$($indices:expr),*]) => {
+        {
+            $crate::arr::index::IndexConstSlice::<{ &[$($indices),*] }>::try_index(&$x)
         }
     };
 }
@@ -111,5 +122,21 @@ mod test {
         let expected = Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]);
         let x = crate::ix!(arr1 => []);
         assert_eq!(x, expected);
+    }
+
+    #[test]
+    fn index_macro_3() {
+        let arr1 = Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]);
+        let expected = Some(Arr::<_, _, { &[3] }>::from([3, 2, 1]));
+        let x = ix!(arr1 => try [0]);
+        assert!(x.zip(expected).is_some_and(|(x, y)| x == y));
+    }
+
+    #[test]
+    fn index_macro_4() {
+        let arr1 = Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]);
+        let expected = Some(Arr::<_, _, { &[] }>::from([-2]));
+        let x = ix!(arr1 => try [1, 2]);
+        assert!(x.zip(expected).is_some_and(|(x, y)| x == y));
     }
 }
