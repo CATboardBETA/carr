@@ -211,3 +211,21 @@ numerical_value! {
     for f32; 32;
     for f64; 64;
 }
+
+impl NumericalValue for usize {
+    #[cfg(target_pointer_width = "32")]
+    const BIT_WIDTH: Self = 32;
+    #[cfg(target_pointer_width = "64")]
+    const BIT_WIDTH: Self = 64;
+    const ZERO: Self = 0;
+    const ONE: Self = 1;
+}
+
+impl NumericalValue for isize {
+    #[cfg(target_pointer_width = "32")]
+    const BIT_WIDTH: usize = 32;
+    #[cfg(target_pointer_width = "64")]
+    const BIT_WIDTH: usize = 64;
+    const ZERO: Self = 0;
+    const ONE: Self = 1;
+}
