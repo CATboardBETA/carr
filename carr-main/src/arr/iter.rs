@@ -2,6 +2,11 @@ use crate::arr::Arr;
 use crate::backend::Backend;
 use std::marker::PhantomData;
 
+
+pub struct ArrIterValue<T> {
+    inner: Vec<T>,
+}
+
 pub struct ArrIter<'a, B: Backend<T>, T, const D: &'static [usize]> {
     inner: &'a Arr<B, T, D>,
     at: usize,
@@ -9,6 +14,14 @@ pub struct ArrIter<'a, B: Backend<T>, T, const D: &'static [usize]> {
 
 pub struct ArrIterMut<'a, T> {
     inner: Vec<&'a mut T>,
+}
+
+impl<T> Iterator for ArrIterValue<T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.pop()
+    }
 }
 
 impl<'a, B: Backend<T>, T: 'a, const D: &'static [usize]> Iterator for ArrIter<'a, B, T, D> {
@@ -37,7 +50,7 @@ impl<'a, B: Backend<T>, T: 'a, const D: &'static [usize]> ExactSizeIterator
     for ArrIter<'a, B, T, D>
 {
     fn len(&self) -> usize {
-        self.inner.storage().length()
+        self.inner.storage().length() - self.at
     }
 }
 
@@ -54,6 +67,22 @@ where
     /// Iterate by exclusive (mutable) reference over an [`Arr`]'s internal storage.
     pub fn iter_mut(&'a mut self) -> ArrIterMut<'a, T> {
         self.into_iter()
+    }
+}
+
+impl<B, T, const D: &'static [usize]> IntoIterator for Arr<B, T, D>
+where
+    B: Backend<T>
+{
+    type Item = T;
+    type IntoIter = ArrIterValue<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let mut inner = self.storage.into_vec();
+        inner.reverse();
+        ArrIterValue {
+            inner
+        }
     }
 }
 
@@ -141,5 +170,14 @@ mod test {
         }
         let expected = Arr::<_, _, { &[5] }>::from([1, 2, 3, 0, 0]);
         assert_eq!(arr, expected);
+    }
+
+    #[test]
+    fn iter_value() {
+        let arr = Arr::<_, _, { &[5] }>::from([1, 2, 3, 4, 5]);
+        let vals = [1, 2, 3, 4, 5];
+        for (x, expected) in arr.into_iter().zip(vals) {
+            assert_eq!(x, expected);
+        }
     }
 }
