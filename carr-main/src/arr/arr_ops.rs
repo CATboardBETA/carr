@@ -3,7 +3,8 @@
 
 use crate::arr::Arr;
 use crate::backend::{Backend, BackendOps};
-use crate::dim::{SQUEEZE, TRANSPOSE, UNSQUEEZE};
+use crate::dim::{SQUEEZE, TRANSPOSE, UNIT_ARR, UNSQUEEZE};
+use crate::prop::{Prop, PropTrue};
 use std::marker::PhantomData;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
 
@@ -208,6 +209,19 @@ where
     }
 }
 
+impl<B, T, const D: &'static [usize]> Arr<B, T, D>
+where
+    B: Backend<T>,
+    Prop<{ UNIT_ARR::<D> }>: PropTrue
+{
+    /// In a one-element array, returns the single element. This works for arrays with any number of
+    /// dimensions, so long as each dimension has only 1 element. 
+    pub fn item(self) -> T {
+        self.into_iter().next().unwrap()
+    }
+}
+
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -322,5 +336,23 @@ mod test {
         let expected = Arr::<_, _, { &[2, 1, 3] }>::from([3, 2, 1, 3, 2, -2]);
         let unsqueezed = arr1.unsqueeze::<1>();
         assert_eq!(unsqueezed, expected);
+    }
+
+    #[test]
+    fn unit_1() {
+        let arr1 = Arr::<_, _, { &[] }>::from([42]);
+        assert_eq!(arr1.item(), 42);
+    }
+
+    #[test]
+    fn unit_2() {
+        let arr1 = Arr::<_, _, { &[1] }>::from([42]);
+        assert_eq!(arr1.item(), 42);
+    }
+
+    #[test]
+    fn unit_3() {
+        let arr1 = Arr::<_, _, { &[1, 1, 1, 1, 1, 1, 1, 1] }>::from([42]);
+        assert_eq!(arr1.item(), 42);
     }
 }

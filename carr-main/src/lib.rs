@@ -22,3 +22,4 @@ pub mod arr;
 pub mod backend;
 pub mod dim;
 pub mod prelude;
+pub mod prop;

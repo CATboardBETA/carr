@@ -40,6 +40,7 @@ pub trait Backend<T>:
     /// Creates a [`Vec<&mut T>`] from a backend, without consuming the underlying storage.
     #[must_use]
     fn as_vec_mut(&mut self) -> Vec<&mut T>;
+    /// Splits an array into an array of arrays.
     #[must_use]
     fn as_split<const X: usize, const Y: usize>(&self) -> &[[T; X]; Y]
     where
