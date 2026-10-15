@@ -6,6 +6,7 @@ license = "GPL-3.0"
 repository = "https://github.com/CATboardBETA/carr"
 keywords = ["nightly", "array", "const-generics", "matrix", "tensor"]
 categories = ["mathematics", "data-structures", "science", ]
+readme = "README.md"
 authors = ["CATboardBETA"]
 
 [workspace]
