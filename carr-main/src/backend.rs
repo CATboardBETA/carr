@@ -9,7 +9,9 @@ use rand::RngExt;
 use rand::distr::uniform::SampleUniform;
 use std::array;
 use std::ops::{Index, IndexMut, Range};
+#[cfg(feature = "rand")]
 use rand::distr::Distribution;
+#[cfg(feature = "rand")]
 use rand::Rng;
 
 /// A storage backend for arrays. This does not store the dimensions, and can be a variable-length
@@ -223,6 +225,7 @@ impl NumericalValue for usize {
     const ZERO: Self = 0;
     const ONE: Self = 1;
 
+    #[cfg(feature = "rand")]
     fn new_random<R: Rng + ?Sized, D: Distribution<Self>>(rng: &mut R, distr: D) -> Self
     where
         Self: SampleUniform
