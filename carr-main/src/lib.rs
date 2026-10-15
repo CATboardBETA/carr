@@ -1,4 +1,4 @@
-#![doc = include_str!("../../README.md")]
+#![doc = include_str!(concat!(env!("CARGO_WORKSPACE_DIR"), "/README.md"))]
 #![forbid(unsafe_code)]
 #![allow(incomplete_features)]
 #![feature(
