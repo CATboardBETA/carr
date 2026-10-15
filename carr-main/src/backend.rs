@@ -9,6 +9,8 @@ use rand::RngExt;
 use rand::distr::uniform::SampleUniform;
 use std::array;
 use std::ops::{Index, IndexMut, Range};
+use rand::distr::Distribution;
+use rand::Rng;
 
 /// A storage backend for arrays. This does not store the dimensions, and can be a variable-length
 /// type (e.g. a [`Vec`]).
@@ -220,13 +222,11 @@ impl NumericalValue for usize {
     const BIT_WIDTH: Self = 64;
     const ZERO: Self = 0;
     const ONE: Self = 1;
-}
 
-impl NumericalValue for isize {
-    #[cfg(target_pointer_width = "32")]
-    const BIT_WIDTH: usize = 32;
-    #[cfg(target_pointer_width = "64")]
-    const BIT_WIDTH: usize = 64;
-    const ZERO: Self = 0;
-    const ONE: Self = 1;
+    fn new_random<R: Rng + ?Sized, D: Distribution<Self>>(rng: &mut R, distr: D) -> Self
+    where
+        Self: SampleUniform
+    {
+        rng.sample(distr)
+    }
 }
