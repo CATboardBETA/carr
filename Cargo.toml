@@ -1,6 +1,6 @@
 [workspace.package]
 description = "Constant sized arrays using const generics"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2024"
 license = "GPL-3.0"
 repository = "https://github.com/CATboardBETA/carr"
