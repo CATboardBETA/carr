@@ -17,7 +17,7 @@ use rand::Rng;
 /// A storage backend for arrays. This does not store the dimensions, and can be a variable-length
 /// type (e.g. a [`Vec`]).
 ///
-/// By default, this is implemented for [`Vec<T>`] and [`[T; N]`](array)
+/// By default, this is implemented for [`Vec<T>`] and [`[T; N]`](prim@array)
 pub trait Backend<T>:
     Index<usize, Output = T>
     + IndexMut<usize, Output = T>
@@ -164,8 +164,8 @@ impl<T: Clone> BackendOps<T> for Vec<T> {
 }
 
 /// Implemented for all numerical types (including char). This is an implementation detail of some
-/// array creation functions, such as [`Arr::new_zeroed`](crate::arr::Arr::new_zeroed),
-/// [`Arr::new_ones`](crate::arr::Arr::new_ones), [`Arr::new_random`](crate::arr::Arr::new_random),
+/// array creation functions, such as [`Arr::new_zeroed`](crate::arr::Arr::new_zeroed) and
+/// [`Arr::new_ones`](crate::arr::Arr::new_ones)
 /// etc.
 pub trait NumericalValue: Sized {
     /// Number of bits in the representation of `Self`
