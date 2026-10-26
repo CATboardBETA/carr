@@ -1,4 +1,15 @@
-#![doc = include_str!("../../README.md")]
+//! `carr`: ***C***onstant-sized ***Arr***ays
+//!
+//! # Installation
+//! To install the latest version, simply run
+//! ```sh
+//! cargo add carr
+//! ```
+//! Or, for manual installation, add `carr="0.1"` to your `Cargo.toml` under the dependencies table.
+//! # Usage
+//! todo
+//! # Examples
+//! todo
 #![forbid(unsafe_code)]
 #![allow(incomplete_features)]
 #![feature(
