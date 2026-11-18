@@ -4,15 +4,15 @@
 use bytemuck::Pod;
 use itertools::Itertools;
 #[cfg(feature = "rand")]
+use rand::Rng;
+#[cfg(feature = "rand")]
 use rand::RngExt;
+#[cfg(feature = "rand")]
+use rand::distr::Distribution;
 #[cfg(feature = "rand")]
 use rand::distr::uniform::SampleUniform;
 use std::array;
 use std::ops::{Index, IndexMut, Range};
-#[cfg(feature = "rand")]
-use rand::distr::Distribution;
-#[cfg(feature = "rand")]
-use rand::Rng;
 
 /// A storage backend for arrays. This does not store the dimensions, and can be a variable-length
 /// type (e.g. a [`Vec`]).
@@ -228,7 +228,7 @@ impl NumericalValue for usize {
     #[cfg(feature = "rand")]
     fn new_random<R: Rng + ?Sized, D: Distribution<Self>>(rng: &mut R, distr: D) -> Self
     where
-        Self: SampleUniform
+        Self: SampleUniform,
     {
         rng.sample(distr)
     }

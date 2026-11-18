@@ -212,15 +212,14 @@ where
 impl<B, T, const D: &'static [usize]> Arr<B, T, D>
 where
     B: Backend<T>,
-    Prop<{ UNIT_ARR::<D> }>: PropTrue
+    Prop<{ UNIT_ARR::<D> }>: PropTrue,
 {
     /// In a one-element array, returns the single element. This works for arrays with any number of
-    /// dimensions, so long as each dimension has only 1 element. 
+    /// dimensions, so long as each dimension has only 1 element.
     pub fn item(self) -> T {
         self.into_iter().next().unwrap()
     }
 }
-
 
 #[cfg(test)]
 mod test {

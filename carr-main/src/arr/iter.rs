@@ -2,7 +2,6 @@ use crate::arr::Arr;
 use crate::backend::Backend;
 use std::marker::PhantomData;
 
-
 pub struct ArrIterValue<T> {
     inner: Vec<T>,
 }
@@ -72,7 +71,7 @@ where
 
 impl<B, T, const D: &'static [usize]> IntoIterator for Arr<B, T, D>
 where
-    B: Backend<T>
+    B: Backend<T>,
 {
     type Item = T;
     type IntoIter = ArrIterValue<T>;
@@ -80,9 +79,7 @@ where
     fn into_iter(self) -> Self::IntoIter {
         let mut inner = self.storage.into_vec();
         inner.reverse();
-        ArrIterValue {
-            inner
-        }
+        ArrIterValue { inner }
     }
 }
 
