@@ -18,10 +18,10 @@ pub trait IndexConstSlice<const AT: &'static [usize]> {
 }
 
 impl<B, T, const D: &'static [usize], const AT: &'static [usize]> IndexConstSlice<AT>
-    for Arr<B, T, D>
+    for &Arr<B, T, D>
 where
     B: Backend<T>,
-    T: Default + Clone,
+    T: Clone,
 {
     type Output = Arr<Vec<T>, T, { INDEX_ARR::<D, AT> }>;
 
@@ -56,21 +56,54 @@ where
 /// Shorthand for indexing an array.
 ///
 /// The expression `ix!(a => [b, c])` is equivalent to
-/// [`IndexConstSlice::<{ &[b, c] }>::index(a)`](IndexConstSlice::index). Likewise, the expression
-/// `ix!(a => try [b, c])` is equivalent to
-/// [`IndexConstSlice::<{ &[b, c] }>::try_index(a)`](IndexConstSlice::try_index).
+/// [`IndexConstSlice::<{ &[b, c] }>::index(a)`](IndexConstSlice::index)
 macro_rules! ix {
     ($x:expr => [$($indices:expr),*]) => {
         {
             $crate::arr::index::IndexConstSlice::<{ &[$($indices),*] }>::index(&$x)
         }
     };
-    ($x:expr => try [$($indices:expr),*]) => {
+    ($x:expr => $indices:expr) => {
+        {
+            $crate::arr::index::IndexConstSlice::<$indices>::index(&$x)
+        }
+    };
+}
+
+#[macro_export]
+/// Like the [`ix`] macro, the expression
+/// `try_ix!(a =>  [b, c])` is equivalent to
+/// [`IndexConstSlice::<{ &[b, c] }>::try_index(a)`](IndexConstSlice::try_index).
+macro_rules! try_ix {
+    ($x:expr =>  [$($indices:expr),*]) => {
         {
             $crate::arr::index::IndexConstSlice::<{ &[$($indices),*] }>::try_index(&$x)
         }
     };
+
+    ($x:expr =>  $indices:expr) => {
+        {
+            $crate::arr::index::IndexConstSlice::<{ $indices }>::try_index(&$x)
+        }
+    };
 }
+
+impl<B, T, const D: &'static [usize], const AT: &'static [usize]> IndexConstSlice<AT>
+for Arr<B, T, D>
+where
+    B: Backend<T>,
+    T:  Clone,{
+    type Output =  Arr<Vec<T>, T, { INDEX_ARR::<D, AT> }>;
+
+    fn index(&self) -> Self::Output {
+        ix!(self => AT)
+    }
+
+    fn try_index(&self) -> Option<Self::Output> {
+        try_ix!(self => AT)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -128,7 +161,7 @@ mod test {
     fn index_macro_3() {
         let arr1 = Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]);
         let expected = Some(Arr::<_, _, { &[3] }>::from([3, 2, 1]));
-        let x = ix!(arr1 => try [0]);
+        let x = try_ix!(arr1 =>  [0]);
         assert!(x.zip(expected).is_some_and(|(x, y)| x == y));
     }
 
@@ -136,7 +169,7 @@ mod test {
     fn index_macro_4() {
         let arr1 = Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]);
         let expected = Some(Arr::<_, _, { &[] }>::from([-2]));
-        let x = ix!(arr1 => try [1, 2]);
+        let x = try_ix!(arr1 =>  [1, 2]);
         assert!(x.zip(expected).is_some_and(|(x, y)| x == y));
     }
 }
