@@ -27,7 +27,9 @@ pub trait Backend<T>:
 {
     /// Creates a new, empty instance of the backend.
     #[must_use]
-    fn new_bck<const N: usize>(x: &T) -> Self;
+    fn new_bck<const N: usize>(x: &T) -> Self
+    where
+        T: Clone;
     /// Create an instance of this backend from a [`Vec<T>`].
     #[must_use]
     fn from_vec(v: Vec<T>) -> Option<Self>;
@@ -69,8 +71,11 @@ pub trait BackendOps<T>: Backend<T> + IntoIterator<Item = T> {
 }
 
 /// TODO: Remove bound on `T`. `MaybeUninit` perhaps?
-impl<T: Clone, const N: usize> Backend<T> for [T; N] {
-    fn new_bck<const N2: usize>(v: &T) -> [T; N] {
+impl<T, const N: usize> Backend<T> for [T; N] {
+    fn new_bck<const N2: usize>(v: &T) -> [T; N]
+    where
+        T: Clone,
+    {
         array::from_fn::<_, N2, _>(|_| v.clone())
             .as_array()
             .cloned()
@@ -119,8 +124,11 @@ impl<T: Clone, const N: usize> BackendOps<T> for [T; N] {
     }
 }
 
-impl<T: Clone> Backend<T> for Vec<T> {
-    fn new_bck<const N: usize>(x: &T) -> Self {
+impl<T> Backend<T> for Vec<T> {
+    fn new_bck<const N: usize>(x: &T) -> Self
+    where
+        T: Clone,
+    {
         Self::from_fn(N, |_| x.clone())
     }
 
@@ -178,10 +186,7 @@ pub trait NumericalValue: Sized {
     /// Creates a new instance of this type, given an RNG and a distribution. Used by
     /// [`Arr::new_random`](crate::arr::Arr::new_random) and friends.
     #[cfg(feature = "rand")]
-    fn new_random<R: rand::Rng + ?Sized, D: rand::distr::Distribution<Self>>(
-        rng: &mut R,
-        distr: D,
-    ) -> Self
+    fn new_random<R: Rng + ?Sized, D: Distribution<Self>>(rng: &mut R, distr: D) -> Self
     where
         Self: SampleUniform;
 }

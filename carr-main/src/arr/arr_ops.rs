@@ -3,7 +3,9 @@
 
 use crate::arr::Arr;
 use crate::backend::{Backend, BackendOps};
+use crate::dim::INDEX_ARR;
 use crate::dim::{SQUEEZE, TRANSPOSE, UNIT_ARR, UNSQUEEZE};
+use crate::ix;
 use crate::prop::{Prop, PropTrue};
 use std::marker::PhantomData;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
@@ -203,9 +205,22 @@ where
         }
     }
 
-    /// At an extra dimension at `AT`, with 1 position.
+    /// Adds an extra dimension at `AT`, with 1 position.
     pub fn unsqueeze<const AT: usize>(self) -> Arr<B, T, { UNSQUEEZE::<D, AT> }> {
         self.reshape()
+    }
+
+    /// Views specific dimensions of an array; returns a [`Arr`] of references. This is equivalent to
+    /// immutable usage of the [`ix`] macro.
+    pub fn view<const V_D: &'static [usize]>(&self) -> Arr<Vec<&T>, &T, { INDEX_ARR::<D, V_D> }> {
+        ix!(self => V_D)
+    }
+
+    /// Returns a mutable view into `self`. This is equivalent to mutable usage of the [`ix`] macro.
+    pub fn view_mut<const V_D: &'static [usize]>(
+        &mut self,
+    ) -> Arr<Vec<&mut T>, &mut T, { INDEX_ARR::<D, V_D> }> {
+        ix!(self => mut V_D)
     }
 }
 

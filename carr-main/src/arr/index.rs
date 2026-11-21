@@ -3,7 +3,6 @@
 use crate::arr::Arr;
 use crate::backend::Backend;
 use crate::dim::INDEX_ARR;
-use itertools::Itertools;
 use std::marker::PhantomData;
 
 /// Index/slice an [`Arr`]. Equivalent to [`std::ops::Index`], except uses const generics instead of
@@ -17,13 +16,23 @@ pub trait IndexConstSlice<const AT: &'static [usize]> {
     fn try_index(&self) -> Option<Self::Output>;
 }
 
-impl<B, T, const D: &'static [usize], const AT: &'static [usize]> IndexConstSlice<AT>
-    for &Arr<B, T, D>
+/// Index/slice an [`Arr`] mutably. Equivalent to [`std::ops::IndexMut`], except uses const generics
+/// instead of  a parameter to specify where to index/slice.
+pub trait IndexConstSliceMut<'a, const AT: &'static [usize]> {
+    /// Output type from indexing
+    type Output;
+    /// Checked mutable indexing operation. Panics on out-of-bounds.
+    fn index_mut(self) -> Self::Output;
+    /// Checked mutable indexing operation. Returns [`None`] on out-of-bounds
+    fn try_index_mut(self) -> Option<Self::Output>;
+}
+
+impl<'a, B, T, const D: &'static [usize], const AT: &'static [usize]> IndexConstSlice<AT>
+    for &'a Arr<B, T, D>
 where
     B: Backend<T>,
-    T: Clone,
 {
-    type Output = Arr<Vec<T>, T, { INDEX_ARR::<D, AT> }>;
+    type Output = Arr<Vec<&'a T>, &'a T, { INDEX_ARR::<D, AT> }>;
 
     fn index(&self) -> Self::Output {
         const {
@@ -36,9 +45,8 @@ where
             .sum::<usize>();
         let slice_len = D[AT.len()..].iter().product::<usize>();
         let out_storage: &[T] = &self.storage()[index..(index + slice_len)];
-        let out_storage = out_storage.iter().cloned().collect_vec();
         Arr {
-            storage: out_storage,
+            storage: out_storage.iter().collect(),
             _phantom: PhantomData,
         }
     }
@@ -52,6 +60,38 @@ where
     }
 }
 
+impl<'a, B, T, const D: &'static [usize], const AT: &'static [usize]> IndexConstSliceMut<'a, AT>
+    for &'a mut Arr<B, T, D>
+where
+    B: Backend<T>,
+{
+    type Output = Arr<Vec<&'a mut T>, &'a mut T, { INDEX_ARR::<D, AT> }>;
+
+    fn index_mut(self) -> Self::Output {
+        const {
+            assert!(D.len() >= AT.len());
+        }
+        let index = AT
+            .iter()
+            .enumerate()
+            .map(|(i, x)| D[(i + 1)..].iter().product::<usize>() * x)
+            .sum::<usize>();
+        let slice_len = D[AT.len()..].iter().product::<usize>();
+        let out_storage: &'a mut [T] = &mut self.storage_mut()[index..(index + slice_len)];
+        Arr {
+            storage: out_storage.iter_mut().collect(),
+            _phantom: PhantomData,
+        }
+    }
+
+    fn try_index_mut(self) -> Option<Self::Output> {
+        if D.len() < AT.len() {
+            None
+        } else {
+            Some(IndexConstSliceMut::<AT>::index_mut(self))
+        }
+    }
+}
 #[macro_export]
 /// Shorthand for indexing an array.
 ///
@@ -66,6 +106,16 @@ macro_rules! ix {
     ($x:expr => $indices:expr) => {
         {
             $crate::arr::index::IndexConstSlice::<$indices>::index(&$x)
+        }
+    };
+    ($x:expr => mut [$($indices:expr),*]) => {
+        {
+            $crate::arr::index::IndexConstSliceMut::<{ &[$($indices),*] }>::index_mut($x)
+        }
+    };
+    ($x:expr => mut $indices:expr) => {
+        {
+            $crate::arr::index::IndexConstSliceMut::<$indices>::index_mut($x)
         }
     };
 }
@@ -86,21 +136,34 @@ macro_rules! try_ix {
             $crate::arr::index::IndexConstSlice::<{ $indices }>::try_index(&$x)
         }
     };
+
+    ($x:expr => mut [$($indices:expr),*]) => {
+        {
+            $crate::arr::index::IndexConstSliceMut::<{ &[$($indices),*] }>::try_index_mut(&mut $x)
+        }
+    };
+
+    ($x:expr => mut $indices:expr) => {
+        {
+            $crate::arr::index::IndexConstSliceMut::<{ $indices }>::try_index_mut(&mut $x)
+        }
+    };
 }
 
 impl<B, T, const D: &'static [usize], const AT: &'static [usize]> IndexConstSlice<AT>
-for Arr<B, T, D>
+    for Arr<B, T, D>
 where
     B: Backend<T>,
-    T:  Clone,{
-    type Output =  Arr<Vec<T>, T, { INDEX_ARR::<D, AT> }>;
+    T: Clone,
+{
+    type Output = Arr<Vec<T>, T, { INDEX_ARR::<D, AT> }>;
 
     fn index(&self) -> Self::Output {
-        ix!(self => AT)
+        ix!(self => AT).into_iter().cloned().collect()
     }
 
     fn try_index(&self) -> Option<Self::Output> {
-        try_ix!(self => AT)
+        try_ix!(self => AT).map(|x| x.into_iter().cloned().collect())
     }
 }
 

@@ -71,6 +71,7 @@ where
 impl<B, T, const D: &'static [usize]> Arr<B, T, D>
 where
     B: Backend<T>,
+    T: Clone,
 {
     /// Create a new [`Arr`], with dimensions specified by `D`.
     #[must_use]
@@ -99,7 +100,7 @@ where
 
 impl<B, T, const D: &'static [usize]> Default for Arr<B, T, D>
 where
-    T: Default,
+    T: Default + Clone,
     B: Backend<T>,
 {
     fn default() -> Self {
