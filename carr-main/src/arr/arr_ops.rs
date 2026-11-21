@@ -230,9 +230,21 @@ where
     Prop<{ UNIT_ARR::<D> }>: PropTrue,
 {
     /// In a one-element array, returns the single element. This works for arrays with any number of
-    /// dimensions, so long as each dimension has only 1 element.
+    /// dimensions, so long as each dimension has only one element.
     pub fn item(self) -> T {
         self.into_iter().next().unwrap()
+    }
+
+    /// In a one-element array, returns a reference to the single element. This works for arrays
+    /// with any number of dimensions, so long as each dimension has only one element.
+    pub fn item_ref(&self) -> &T {
+        self.iter().next().unwrap()
+    }
+
+    /// In a one-element array, returns a mutable reference to the single element. This works for
+    /// arrays with any number of dimensions, so long as each dimension has only one element.
+    pub fn item_mut(&mut self) -> &mut T {
+        self.iter_mut().next().unwrap()
     }
 }
 
