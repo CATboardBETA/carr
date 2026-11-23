@@ -50,9 +50,9 @@ where
     B: Backend<T>,
 {
     /// Internal storage of the [`Arr`], must implement [`Backend<T>`] and usually [`BackendOps<T>`].
-    storage: B,
+    pub(crate) storage: B,
     /// Phantom, since `T` isn't used in the type for `storage`
-    _phantom: PhantomData<T>,
+    pub(crate) _phantom: PhantomData<T>,
 }
 
 impl<B, T, const D: &'static [usize]> Clone for Arr<B, T, D>

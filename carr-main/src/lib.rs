@@ -32,5 +32,7 @@
 pub mod arr;
 pub mod backend;
 pub mod dim;
+#[cfg(any(feature = "image", feature = "ndarray"))]
+pub mod integrations;
 pub mod prelude;
 pub mod prop;

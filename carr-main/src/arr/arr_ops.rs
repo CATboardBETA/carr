@@ -451,10 +451,11 @@ mod test {
         //  [[0, 0], [0, 0]],
         // ]
         let arr2 = Arr::<Vec<i32>, i32, { &[2, 2, 2] }>::new_zeroed();
-        let expected = Arr::<_, i32, { &[2, 5, 2] }>::from([1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0]);
+        let expected = Arr::<_, i32, { &[2, 5, 2] }>::from([
+            1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+        ]);
         assert_eq!(arr1.concat::</* axis = */ 1, _, _>(&arr2), expected);
     }
-
 
     #[test]
     fn concat_many() {
@@ -470,7 +471,13 @@ mod test {
         let arr2 = Arr::<Vec<i32>, i32, { &[2, 1] }>::new_zeroed();
         let arr3 = arr1.clone();
         let arr4 = arr2.clone();
-        let expected = Arr::<_, i32, { &[2, 8] }>::from([1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0]);
-        assert_eq!(arr1.concat::<1, _, _>(&arr2).concat::<1, _, _>(&arr3).concat::<1, _, _>(&arr4), expected);
+        let expected =
+            Arr::<_, i32, { &[2, 8] }>::from([1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0]);
+        assert_eq!(
+            arr1.concat::<1, _, _>(&arr2)
+                .concat::<1, _, _>(&arr3)
+                .concat::<1, _, _>(&arr4),
+            expected
+        );
     }
 }
