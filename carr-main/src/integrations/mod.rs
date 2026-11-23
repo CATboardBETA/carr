@@ -19,3 +19,5 @@ pub enum IntegrationError {
 
 #[cfg(feature = "image")]
 pub mod image;
+#[cfg(feature = "ndarray")]
+pub mod ndarray;
