@@ -5,6 +5,7 @@
 /// Errors specific to integrations, that can't occur anywhere else
 // TODO: Add a broader error enum, used anywhere fallible
 #[derive(Clone, PartialEq, Eq, Debug)]
+#[non_exhaustive]
 pub enum IntegrationError {
     /// Dimensional mismatch between input array-like structure and the target dimensions const
     /// generic
