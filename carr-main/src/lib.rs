@@ -32,5 +32,7 @@
 pub mod arr;
 pub mod backend;
 pub mod dim;
+#[cfg(feature = "image")]
+pub mod integrations;
 pub mod prelude;
 pub mod prop;
