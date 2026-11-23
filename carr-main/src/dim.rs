@@ -5,11 +5,11 @@
 //! Look at [`TRANSPOSE`] for an example on how this is implemented.
 
 /// Dimension constant for transposed 2D arrays. Simply flips first and second dimension.
-pub const TRANSPOSE<const D: &'static [usize]>: &[usize] = &[D[1], D[0]];
+pub(crate) const TRANSPOSE<const D: &'static [usize]>: &[usize] = &[D[1], D[0]];
 
-const LEN<const OF: &'static [usize]>: usize = OF.len();
-const ADD<const X: usize, const Y: usize>: usize = X + Y;
-const SUB<const X: usize, const Y: usize>: usize = X - Y;
+pub(crate) const LEN<const OF: &'static [usize]>: usize = OF.len();
+pub(crate) const ADD<const X: usize, const Y: usize>: usize = X + Y;
+pub(crate) const SUB<const X: usize, const Y: usize>: usize = X - Y;
 pub(crate) const PROD<const A: usize, const B: usize>: usize = A * B;
 
 pub(crate) const TOTAL_DIM<const D: &'static [usize]>: usize = {
@@ -81,3 +81,24 @@ pub(crate) const INDEX_ARR<const D: &'static [usize], const AT: &'static [usize]
     &INDEX_ARR1::<D, AT>;
 
 pub(crate) const UNIT_ARR<const D: &'static [usize]>: bool = TOTAL_DIM::<D> == 1;
+
+pub(crate) const CONCAT1<const AXIS: usize, const D1: &'static [usize], const D2: &'static [usize]>: [usize; LEN::<D1> ] = {
+    assert!(D1.len() == D2.len(), "Must concat with equal dimensions");
+    assert!(AXIS < D1.len(), "Axis must be within the number of dimensions");
+    let mut i = 0;
+    let mut new = [0; LEN::<D1>];
+    let mut varied_yet = false;
+    while i < D1.len() {
+        if i == AXIS {
+            assert!(!varied_yet, "Dimensions must vary along exactly one axis");
+            varied_yet = true;
+            new[i] = D1[i] + D2[i];
+        } else {
+            new[i] = D1[i];
+        }
+        i += 1;
+    }
+    new
+};
+
+pub(crate) const CONCAT<const AXIS: usize, const D1: &'static [usize], const D2: &'static [usize]>: &[usize] = &CONCAT1::<AXIS, D1, D2>;
