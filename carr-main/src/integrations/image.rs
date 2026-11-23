@@ -1,4 +1,4 @@
-//! Integration with the [image crate](https://lib.rs/crates/image).
+//! Integration with the [`image` crate](https://lib.rs/crates/image).
 
 use crate::integrations::IntegrationError;
 use crate::prelude::*;
