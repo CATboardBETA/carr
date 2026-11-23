@@ -10,8 +10,10 @@ pub enum IntegrationError {
     /// generic
     DimMismatch,
     /// An empty array would be outputted from the conversion. (an invalid state for
-    /// [`Arr`](crate::prelude::Arr).
+    /// [`Arr`](crate::prelude::Arr)).
     EmptyArr,
+    /// When a dimension overflows a type that it must be converted to for the integration.
+    DimOverflow,
 }
 
 #[cfg(feature = "image")]

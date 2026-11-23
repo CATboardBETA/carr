@@ -5,12 +5,11 @@ use crate::prelude::*;
 use image::{ImageBuffer, Pixel};
 use std::marker::PhantomData;
 use std::ops::Deref;
-use crate::backend::BackendOps;
 
 impl<P, B, const D: &'static [usize]> TryFrom<ImageBuffer<P, B>> for Arr<B, P::Subpixel, D>
 where
     P: Pixel,
-    B: Backend<P::Subpixel> + BackendOps<P::Subpixel> + Deref<Target = [P::Subpixel]>,
+    B: Backend<P::Subpixel> + Deref<Target = [P::Subpixel]>,
 {
     type Error = IntegrationError;
 
@@ -28,12 +27,36 @@ where
     }
 }
 
+impl<P, B, const D: &'static [usize]> TryFrom<Arr<B, P::Subpixel, D>> for ImageBuffer<P, B>
+where
+    P: Pixel,
+    B: Backend<P::Subpixel> + Deref<Target = [P::Subpixel]>,
+{
+    type Error = IntegrationError;
+
+    fn try_from(value: Arr<B, P::Subpixel, D>) -> Result<Self, Self::Error> {
+        const {
+            assert!(
+                D.len() == 3 && P::CHANNEL_COUNT as usize == D[2],
+                "Converting from an `Arr` to an image requires the array be in the shape [y, x, subpixel]"
+            );
+        }
+
+        Ok(Self::from_raw(
+            D[1].try_into().map_err(|_| IntegrationError::DimOverflow)?,
+            D[0].try_into().map_err(|_| IntegrationError::DimOverflow)?,
+            value.storage,
+        )
+        .unwrap())
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::integrations::IntegrationError;
+    use crate::ix;
     use crate::prelude::Arr;
     use image::{Rgb, RgbImage};
-    use crate::ix;
 
     #[test]
     fn dim_mismatch() {
@@ -72,7 +95,6 @@ mod test {
         assert_eq!(image.try_into(), Ok(expected));
     }
 
-
     #[test]
     fn okay_2() {
         let mut image = RgbImage::new(8, 8);
@@ -80,5 +102,14 @@ mod test {
         let mut expected = Arr::<Vec<u8>, u8, { &[8, 8, 3] }>::new_zeroed();
         *ix!(&mut expected => mut [0, 1, 2]).item() = 255;
         assert_eq!(image.try_into(), Ok(expected));
+    }
+
+    #[test]
+    fn from_arr_1() {
+        let mut a = Arr::<Vec<u8>, u8, { &[8, 8, 3] }>::new_zeroed();
+        *ix!(&mut a => mut [0, 1, 2]).item() = 255;
+        let mut expected = RgbImage::new(8, 8);
+        expected.put_pixel(1, 0, Rgb([0, 0, 255]));
+        assert_eq!(a.try_into(), Ok(expected));
     }
 }
