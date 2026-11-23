@@ -1,5 +1,5 @@
 use crate::arr::Arr;
-use crate::backend::Backend;
+use crate::backend::{Backend, InMemBackend};
 use std::marker::PhantomData;
 
 pub struct ArrIterValue<T> {
@@ -64,7 +64,10 @@ where
     }
 
     /// Iterate by exclusive (mutable) reference over an [`Arr`]'s internal storage.
-    pub fn iter_mut(&'a mut self) -> ArrIterMut<'a, T> {
+    pub fn iter_mut(&'a mut self) -> ArrIterMut<'a, T>
+    where
+        B: InMemBackend<T>,
+    {
         self.into_iter()
     }
 }
@@ -98,7 +101,7 @@ where
 
 impl<'a, B, T, const D: &'static [usize]> IntoIterator for &'a mut Arr<B, T, D>
 where
-    B: Backend<T> + 'a,
+    B: Backend<T> + InMemBackend<T> + 'a,
     T: 'a,
 {
     type Item = &'a mut T;
@@ -113,7 +116,7 @@ where
 
 impl<B, T, const D: &'static [usize]> FromIterator<T> for Arr<B, T, D>
 where
-    B: Backend<T>,
+    B: Backend<T> + InMemBackend<T>,
 {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         Self {

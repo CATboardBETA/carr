@@ -1,6 +1,6 @@
 //! Primary module for this crate. Holds all structs and impls for the [`Arr`] type.
 
-use crate::backend::{Backend, BackendOps, NumericalValue};
+use crate::backend::{Backend, InMemBackend, NumericalValue};
 use crate::dim::TOTAL_DIM;
 #[cfg(feature = "rand")]
 use rand::RngExt;
@@ -108,37 +108,9 @@ where
     }
 }
 
-/// Functions expressible generically for all arrays that implement [`BackendOps<T>`] as well as
-/// [`Backend<T>`].
 impl<B, T, const D: &'static [usize]> Arr<B, T, D>
 where
-    B: Backend<T> + BackendOps<T>,
-{
-    /// Applies a function between two [`Arr`]s of the same or different [`Backend`].
-    ///
-    /// Currently, this always returns an [`Arr`] with [`Vec`] as the [`Backend`], but this may
-    /// be changed in the future without a semver update. Do not rely on this feature.
-    #[must_use]
-    fn apply_ops<B2, B3, F, const D2: &'static [usize]>(
-        self,
-        other: Arr<B2, T, D2>,
-        f: F,
-    ) -> Arr<B3, T, D>
-    where
-        B2: Backend<T> + BackendOps<T>,
-        B3: Backend<T> + BackendOps<T>,
-        F: FnMut((T, T)) -> T,
-    {
-        Arr {
-            storage: self.storage.apply_ops(other.storage, f),
-            _phantom: PhantomData,
-        }
-    }
-}
-
-impl<B, T, const D: &'static [usize]> Arr<B, T, D>
-where
-    B: Backend<T>,
+    B: Backend<T> + InMemBackend<T>,
     T: NumericalValue,
 {
     /// Generates a new array, with each value being zero.

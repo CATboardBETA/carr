@@ -1,6 +1,6 @@
 //! Integration for the [`ndarray` crate](https://lib.rs/crates/ndarray).
 
-use crate::backend::Backend;
+use crate::backend::{Backend, InMemBackend};
 use crate::integrations::IntegrationError;
 use crate::prelude::Arr;
 use ndarray::{Array, ArrayBase, Data, Dimension, IxDyn};
@@ -9,7 +9,7 @@ use std::marker::PhantomData;
 impl<S, B, T, NdD, const D: &'static [usize]> TryFrom<ArrayBase<S, NdD>> for Arr<B, T, D>
 where
     S: Data<Elem = T>,
-    B: Backend<T>,
+    B: Backend<T> + InMemBackend<T>,
     T: Clone,
     NdD: Dimension,
 {

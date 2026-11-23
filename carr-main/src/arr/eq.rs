@@ -1,7 +1,7 @@
 //! Equality check for arrays with differing or equivalent backends.
 
 use crate::arr::Arr;
-use crate::backend::Backend;
+use crate::backend::{Backend, InMemBackend};
 use std::cmp::Ordering;
 
 impl<B1, B2, T, const D: &'static [usize]> PartialEq<Arr<B2, T, D>> for Arr<B1, T, D>
@@ -116,6 +116,7 @@ where
     pub fn max_cloned(&self, other: &Self) -> Self
     where
         T: Clone,
+        B: InMemBackend<T>,
     {
         self.iter()
             .zip(other)
@@ -138,6 +139,7 @@ where
     pub fn min_cloned(&self, other: &Self) -> Self
     where
         T: Clone,
+        B: InMemBackend<T>,
     {
         self.iter()
             .zip(other)
@@ -170,6 +172,7 @@ where
     pub fn clamp_cloned(&self, start: &T, end: &T) -> Self
     where
         T: Clone,
+        B: InMemBackend<T>,
     {
         self.iter()
             .map(|x| {

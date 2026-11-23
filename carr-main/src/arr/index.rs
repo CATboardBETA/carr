@@ -1,7 +1,7 @@
 //! Indexing operations. Includes a custom trait for indexing with constant dimension,
 
 use crate::arr::Arr;
-use crate::backend::Backend;
+use crate::backend::{Backend, InMemBackend};
 use crate::dim::INDEX_ARR;
 use std::marker::PhantomData;
 
@@ -63,7 +63,7 @@ where
 impl<'a, B, T, const D: &'static [usize], const AT: &'static [usize]> IndexConstSliceMut<'a, AT>
     for &'a mut Arr<B, T, D>
 where
-    B: Backend<T>,
+    B: Backend<T> + InMemBackend<T>,
 {
     type Output = Arr<Vec<&'a mut T>, &'a mut T, { INDEX_ARR::<D, AT> }>;
 
