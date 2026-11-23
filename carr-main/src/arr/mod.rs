@@ -70,7 +70,7 @@ where
 /// Functions expressible generically for ALL const arrays
 impl<B, T, const D: &'static [usize]> Arr<B, T, D>
 where
-    B: Backend<T>,
+    B: Backend<T> + InMemBackend<T>,
     T: Clone,
 {
     /// Create a new [`Arr`], with dimensions specified by `D`.
@@ -101,7 +101,7 @@ where
 impl<B, T, const D: &'static [usize]> Default for Arr<B, T, D>
 where
     T: Default + Clone,
-    B: Backend<T>,
+    B: Backend<T> + InMemBackend<T>,
 {
     fn default() -> Self {
         Self::new(&T::default())

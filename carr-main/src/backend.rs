@@ -19,11 +19,6 @@ use std::ops::{Index, IndexMut, Range};
 ///
 /// By default, this is implemented for [`Vec<T>`] and [`[T; N]`](prim@array)
 pub trait Backend<T>: Index<usize, Output = T> + Index<Range<usize>, Output = [T]> + Sized {
-    /// Creates a new, empty instance of the backend.
-    #[must_use]
-    fn new_bck<const N: usize>(x: &T) -> Self
-    where
-        T: Clone;
     /// Get the 1-D length of this backend. This should be equivalent to the product of the
     /// dimensions slice of the outer array.
     #[must_use]
@@ -45,6 +40,11 @@ pub trait Backend<T>: Index<usize, Output = T> + Index<Range<usize>, Output = [T
 pub trait InMemBackend<T>:
     Sized + IndexMut<usize, Output = T> + IndexMut<Range<usize>, Output = [T]> + Backend<T>
 {
+    /// Creates a new, empty instance of the backend.
+    #[must_use]
+    fn new_bck<const N: usize>(x: &T) -> Self
+    where
+        T: Clone;
     /// Creates a [`Vec<&mut T>`] from a backend, without consuming the underlying storage.
     #[must_use]
     fn as_vec_mut(&mut self) -> Vec<&mut T>;
@@ -56,14 +56,6 @@ pub trait InMemBackend<T>:
 
 /// TODO: Remove bound on `T`. `MaybeUninit` perhaps?
 impl<T, const N: usize> Backend<T> for [T; N] {
-    fn new_bck<const N2: usize>(v: &T) -> [T; N]
-    where
-        T: Clone,
-    {
-        const { assert!(N == N2, "internal error") }
-        array::from_fn::<_, N, _>(|_| v.clone())
-    }
-
     fn length(&self) -> usize {
         self.len()
     }
@@ -88,6 +80,14 @@ impl<T, const N: usize> Backend<T> for [T; N] {
 }
 
 impl<T, const N: usize> InMemBackend<T> for [T; N] {
+    fn new_bck<const N2: usize>(v: &T) -> [T; N]
+    where
+        T: Clone,
+    {
+        const { assert!(N == N2, "internal error") }
+        array::from_fn::<_, N, _>(|_| v.clone())
+    }
+
     fn as_vec_mut(&mut self) -> Vec<&mut T> {
         self.iter_mut().collect_vec()
     }
@@ -98,13 +98,6 @@ impl<T, const N: usize> InMemBackend<T> for [T; N] {
 }
 
 impl<T> Backend<T> for Vec<T> {
-    fn new_bck<const N: usize>(x: &T) -> Self
-    where
-        T: Clone,
-    {
-        Self::from_fn(N, |_| x.clone())
-    }
-
     fn length(&self) -> usize {
         self.len()
     }
@@ -126,6 +119,13 @@ impl<T> Backend<T> for Vec<T> {
 }
 
 impl<T> InMemBackend<T> for Vec<T> {
+    fn new_bck<const N: usize>(x: &T) -> Self
+    where
+        T: Clone,
+    {
+        Self::from_fn(N, |_| x.clone())
+    }
+
     fn as_vec_mut(&mut self) -> Vec<&mut T> {
         self.iter_mut().collect_vec()
     }
