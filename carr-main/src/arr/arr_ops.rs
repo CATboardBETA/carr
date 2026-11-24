@@ -164,7 +164,7 @@ where
         let mut out = Vec::with_capacity(height * width);
         for c in 0..height {
             for r in 0..width {
-                out.push(self.storage[r * height + c].clone());
+                out.push(self.storage.index(r * height + c).clone());
             }
         }
         out.into_iter().collect()
@@ -239,13 +239,16 @@ where
 
         for i in 0..outer_size {
             let start_a = i * chunk_a;
-            new.extend_from_slice(&self.storage[start_a..start_a + chunk_a]);
+            new.extend(self.storage.index_range(start_a..start_a + chunk_a));
 
             let start_b = i * chunk_b;
-            new.extend_from_slice(&other.storage[start_b..start_b + chunk_b]);
+            new.extend(other.storage.index_range(start_b..start_b + chunk_b));
         }
 
-        new.into_iter().collect()
+        Arr {
+            storage: new.into_iter().cloned().collect(),
+            _phantom: PhantomData,
+        }
     }
 }
 

@@ -18,7 +18,8 @@ use std::ops::{Index, IndexMut, Range};
 /// type (e.g. a [`Vec`]).
 ///
 /// By default, this is implemented for [`Vec<T>`] and [`[T; N]`](prim@array)
-pub trait Backend<T>: Index<usize, Output = T> + Index<Range<usize>, Output = [T]> + Sized {
+#[must_use]
+pub trait Backend<T>: Sized {
     /// Get the 1-D length of this backend. This should be equivalent to the product of the
     /// dimensions slice of the outer array.
     #[must_use]
@@ -26,11 +27,33 @@ pub trait Backend<T>: Index<usize, Output = T> + Index<Range<usize>, Output = [T
 
     /// Iterate over all elements of the backend by-value.
     fn into_iter_all(self) -> impl Iterator<Item = T>;
+
+    /// Gets a value from a specific index
+    #[must_use]
+    fn get(&self, index: usize) -> Option<&T>;
+
+    /// Gets a range of values from a range of indices
+    fn get_range<'a>(&'a self, index: Range<usize>) -> Option<impl Iterator<Item=&'a T>> where T: 'a;
+
+    /// Gets a value from a specific index, panicking on OOB
+    #[must_use]
+    fn index(&self,index: usize) -> &T {
+        self.get(index).unwrap()
+    }
+
+    /// Gets a range of values from a range of indices, panicking on OOB
+    fn index_range<'a>(&'a self, index: Range<usize>) -> impl Iterator<Item=&'a T> where T: 'a {
+        self.get_range(index).unwrap()
+    }
 }
 
 /// A backend that is stored in memory. This is in contrast to a [`FuncBackend`]
 pub trait InMemBackend<T>:
-    IndexMut<usize, Output = T> + IndexMut<Range<usize>, Output = [T]> + Backend<T>
+    Index<usize, Output = T>
+    + Index<Range<usize>, Output = [T]>
+    + IndexMut<usize, Output = T>
+    + IndexMut<Range<usize>, Output = [T]>
+    + Backend<T>
 {
     /// Creates a new, empty instance of the backend.
     #[must_use]
@@ -68,6 +91,14 @@ impl<T, const N: usize> Backend<T> for [T; N] {
 
     fn into_iter_all(self) -> impl Iterator<Item = T> {
         self.into_iter()
+    }
+
+    fn get(&self, index: usize) -> Option<&T> {
+        <[T]>::get(self, index)
+    }
+
+    fn get_range<'a>(&'a self, index: Range<usize>) -> Option<impl Iterator<Item=&'a T>> where T: 'a {
+        <[T]>::get(self, index).map(|x| x.iter())
     }
 }
 
@@ -115,6 +146,14 @@ impl<T> Backend<T> for Vec<T> {
     fn into_iter_all(self) -> impl Iterator<Item = T> {
         self.into_iter()
     }
+
+    fn get(&self, index: usize) -> Option<&T> {
+        <[T]>::get(self, index)
+    }
+
+    fn get_range<'a>(&'a self, index: Range<usize>) -> Option<impl Iterator<Item=&'a T>> where T: 'a {
+        <[T]>::get(self, index).map(|x| x.iter())
+    }
 }
 
 impl<T> InMemBackend<T> for Vec<T> {
@@ -146,6 +185,35 @@ impl<T> InMemBackend<T> for Vec<T> {
         T: Pod,
     {
         bytemuck::cast_ref(self.as_array::<{ crate::dim::PROD::<X, Y> }>().unwrap())
+    }
+}
+
+/// Backend that always returns the same value:
+pub struct ConstantBackend<'a, T: Clone>(&'a T);
+
+impl<'a, T: Clone> ConstantBackend<'a, T> {
+    /// Create a new [`ConstantBackend`], from a given value
+    pub const fn new(v: &'a T) -> Self {
+        Self(v)
+    }
+}
+
+// I give up, I'll just let it require `Clone` ig
+impl<T: Clone> Backend<T> for ConstantBackend<'_, T> {
+    fn length(&self) -> usize {
+        usize::MAX
+    }
+
+    fn into_iter_all(self) -> impl Iterator<Item=T> {
+        std::iter::repeat(self.0.clone())
+    }
+
+    fn get(&self, _index: usize) -> Option<&T> {
+        Some(self.0)
+    }
+
+    fn get_range<'a>(&'a self, index: Range<usize>) -> Option<impl Iterator<Item=&'a T>> where T: 'a {
+        Some(std::iter::repeat_n(self.0, index.len()))
     }
 }
 
@@ -214,5 +282,21 @@ impl NumericalValue for usize {
         Self: SampleUniform,
     {
         rng.sample(distr)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::backend::{Backend, ConstantBackend};
+
+    #[test]
+    fn constant_backend() {
+        let backend = ConstantBackend::new(&7);
+        let mut iter = backend.get_range(0..4).unwrap();
+        assert_eq!(iter.next(), Some(&7));
+        assert_eq!(iter.next(), Some(&7));
+        assert_eq!(iter.next(), Some(&7));
+        assert_eq!(iter.next(), Some(&7));
+        assert_eq!(iter.next(), None);
     }
 }

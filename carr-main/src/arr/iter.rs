@@ -65,7 +65,7 @@ where
     B: Backend<T>,
 {
     type Item = T;
-    type IntoIter = impl Iterator<Item=T>;
+    type IntoIter = impl Iterator<Item = T>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.storage.into_iter_all()
