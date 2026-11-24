@@ -29,7 +29,7 @@ where
 
 impl<B, T, const D: &'static [usize]> TryFrom<Arr<B, T, D>> for Array<T, IxDyn>
 where
-    B: Backend<T>,
+    B: InMemBackend<T>,
 {
     type Error = IntegrationError;
 

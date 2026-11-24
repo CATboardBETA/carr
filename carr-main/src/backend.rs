@@ -23,22 +23,14 @@ pub trait Backend<T>: Index<usize, Output = T> + Index<Range<usize>, Output = [T
     /// dimensions slice of the outer array.
     #[must_use]
     fn length(&self) -> usize;
-    /// Creates a [`Vec<T>`] from a backend, consuming the underlying storage.
-    #[must_use]
-    fn into_vec(self) -> Vec<T>;
-    /// Creates a [`Vec<&T>`] from a backend, without consuming the underlying storage.
-    #[must_use]
-    fn as_vec(&self) -> Vec<&T>;
-    /// Splits an array into an array of arrays.
-    #[must_use]
-    fn as_split<const X: usize, const Y: usize>(&self) -> &[[T; X]; Y]
-    where
-        T: Pod;
+
+    /// Iterate over all elements of the backend by-value.
+    fn into_iter_all(self) -> impl Iterator<Item = T>;
 }
 
 /// A backend that is stored in memory. This is in contrast to a [`FuncBackend`]
 pub trait InMemBackend<T>:
-    Sized + IndexMut<usize, Output = T> + IndexMut<Range<usize>, Output = [T]> + Backend<T>
+    IndexMut<usize, Output = T> + IndexMut<Range<usize>, Output = [T]> + Backend<T>
 {
     /// Creates a new, empty instance of the backend.
     #[must_use]
@@ -52,12 +44,48 @@ pub trait InMemBackend<T>:
     /// Create an instance of this backend from a [`Vec<T>`].
     #[must_use]
     fn from_vec(v: Vec<T>) -> Option<Self>;
+
+    /// Creates a [`Vec<T>`] from a backend, consuming the underlying storage.
+    #[must_use]
+    fn into_vec(self) -> Vec<T>;
+
+    /// Creates a [`Vec<&T>`] from a backend, without consuming the underlying storage.
+    #[must_use]
+    fn as_vec(&self) -> Vec<&T>;
+
+    /// Splits an array into an array of arrays.
+    #[must_use]
+    fn as_split<const X: usize, const Y: usize>(&self) -> &[[T; X]; Y]
+    where
+        T: Pod;
 }
 
 /// TODO: Remove bound on `T`. `MaybeUninit` perhaps?
 impl<T, const N: usize> Backend<T> for [T; N] {
     fn length(&self) -> usize {
         self.len()
+    }
+
+    fn into_iter_all(self) -> impl Iterator<Item = T> {
+        self.into_iter()
+    }
+}
+
+impl<T, const N: usize> InMemBackend<T> for [T; N] {
+    fn new_bck<const N2: usize>(v: &T) -> [T; N]
+    where
+        T: Clone,
+    {
+        const { assert!(N == N2, "internal error") }
+        array::from_fn::<_, N, _>(|_| v.clone())
+    }
+
+    fn as_vec_mut(&mut self) -> Vec<&mut T> {
+        self.iter_mut().collect_vec()
+    }
+
+    fn from_vec(v: Vec<T>) -> Option<Self> {
+        v.try_into().ok()
     }
 
     fn into_vec(self) -> Vec<T> {
@@ -79,42 +107,13 @@ impl<T, const N: usize> Backend<T> for [T; N] {
     }
 }
 
-impl<T, const N: usize> InMemBackend<T> for [T; N] {
-    fn new_bck<const N2: usize>(v: &T) -> [T; N]
-    where
-        T: Clone,
-    {
-        const { assert!(N == N2, "internal error") }
-        array::from_fn::<_, N, _>(|_| v.clone())
-    }
-
-    fn as_vec_mut(&mut self) -> Vec<&mut T> {
-        self.iter_mut().collect_vec()
-    }
-
-    fn from_vec(v: Vec<T>) -> Option<Self> {
-        v.try_into().ok()
-    }
-}
-
 impl<T> Backend<T> for Vec<T> {
     fn length(&self) -> usize {
         self.len()
     }
 
-    fn into_vec(self) -> Self {
-        self
-    }
-
-    fn as_vec(&self) -> Vec<&T> {
-        self.iter().collect_vec()
-    }
-
-    fn as_split<const X: usize, const Y: usize>(&self) -> &[[T; X]; Y]
-    where
-        T: Pod,
-    {
-        bytemuck::cast_ref(self.as_array::<{ crate::dim::PROD::<X, Y> }>().unwrap())
+    fn into_iter_all(self) -> impl Iterator<Item = T> {
+        self.into_iter()
     }
 }
 
@@ -132,6 +131,21 @@ impl<T> InMemBackend<T> for Vec<T> {
 
     fn from_vec(v: Self) -> Option<Self> {
         Some(v)
+    }
+
+    fn into_vec(self) -> Self {
+        self
+    }
+
+    fn as_vec(&self) -> Vec<&T> {
+        self.iter().collect_vec()
+    }
+
+    fn as_split<const X: usize, const Y: usize>(&self) -> &[[T; X]; Y]
+    where
+        T: Pod,
+    {
+        bytemuck::cast_ref(self.as_array::<{ crate::dim::PROD::<X, Y> }>().unwrap())
     }
 }
 

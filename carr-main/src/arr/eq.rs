@@ -11,7 +11,7 @@ where
     T: PartialEq,
 {
     fn eq(&self, other: &Arr<B2, T, D>) -> bool {
-        self.storage().as_vec() == other.storage().as_vec()
+        self.iter().zip(other).all(|(x, y)| x == y)
     }
 }
 
