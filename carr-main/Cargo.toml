@@ -16,6 +16,7 @@ itertools = "0.15.0"
 rand = { version = "0.10.2", optional = true }
 image = { version = "0.25.10", optional = true }
 ndarray = { version = "0.17.2", optional = true }
+bumpalo = { version = "3.20.4", features = ["allocator_api", "std"] }
 
 [features]
 default = []

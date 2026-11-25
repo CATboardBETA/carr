@@ -1,18 +1,20 @@
 //! Backend storage, internal to [`arr::Arr`](crate::arr::Arr). Also contains a trait for numerical
 //! types (e.g. i32, f64, u8, etc.)
 
+use bumpalo::Bump;
 use bytemuck::Pod;
 use itertools::Itertools;
+#[cfg(feature = "rand")]
+use rand::distr::uniform::SampleUniform;
+#[cfg(feature = "rand")]
+use rand::distr::Distribution;
 #[cfg(feature = "rand")]
 use rand::Rng;
 #[cfg(feature = "rand")]
 use rand::RngExt;
-#[cfg(feature = "rand")]
-use rand::distr::Distribution;
-#[cfg(feature = "rand")]
-use rand::distr::uniform::SampleUniform;
-use std::array;
+use std::cell::RefCell;
 use std::ops::{Index, IndexMut, Range};
+use std::{array, iter};
 
 /// A storage backend for arrays. This does not store the dimensions, and can be a variable-length
 /// type (e.g. a [`Vec`]).
@@ -29,8 +31,7 @@ pub trait Backend<T>: Sized {
     fn into_iter_all(self) -> impl Iterator<Item = T>;
 
     /// Gets a value from a specific index
-    #[must_use]
-    fn get(&self, index: usize) -> Option<&T>;
+    fn get<'a>(&'a self, index: usize) -> impl FnOnce() -> Option<&'a T> where T: 'a;
 
     /// Gets a range of values from a range of indices
     fn get_range<'a>(&'a self, index: Range<usize>) -> Option<impl Iterator<Item=&'a T>> where T: 'a;
@@ -38,7 +39,7 @@ pub trait Backend<T>: Sized {
     /// Gets a value from a specific index, panicking on OOB
     #[must_use]
     fn index(&self,index: usize) -> &T {
-        self.get(index).unwrap()
+        self.get(index)().unwrap()
     }
 
     /// Gets a range of values from a range of indices, panicking on OOB
@@ -47,7 +48,7 @@ pub trait Backend<T>: Sized {
     }
 }
 
-/// A backend that is stored in memory. This is in contrast to a [`FuncBackend`]
+/// A backend that is stored in memory.
 pub trait InMemBackend<T>:
     Index<usize, Output = T>
     + Index<Range<usize>, Output = [T]>
@@ -93,11 +94,14 @@ impl<T, const N: usize> Backend<T> for [T; N] {
         self.into_iter()
     }
 
-    fn get(&self, index: usize) -> Option<&T> {
-        <[T]>::get(self, index)
+    fn get<'a>(&'a self, index: usize) -> impl FnOnce() -> Option<&'a T> where T: 'a {
+        move || <[T]>::get(self, index)
     }
 
-    fn get_range<'a>(&'a self, index: Range<usize>) -> Option<impl Iterator<Item=&'a T>> where T: 'a {
+    fn get_range<'a>(&'a self, index: Range<usize>) -> Option<impl Iterator<Item=&'a T>>
+    where
+        T: 'a
+    {
         <[T]>::get(self, index).map(|x| x.iter())
     }
 }
@@ -147,8 +151,8 @@ impl<T> Backend<T> for Vec<T> {
         self.into_iter()
     }
 
-    fn get(&self, index: usize) -> Option<&T> {
-        <[T]>::get(self, index)
+    fn get<'a>(&'a self, index: usize) -> impl FnOnce() -> Option<&'a T> where T: 'a {
+        move || <[T]>::get(self, index)
     }
 
     fn get_range<'a>(&'a self, index: Range<usize>) -> Option<impl Iterator<Item=&'a T>> where T: 'a {
@@ -205,15 +209,68 @@ impl<T: Clone> Backend<T> for ConstantBackend<'_, T> {
     }
 
     fn into_iter_all(self) -> impl Iterator<Item=T> {
-        std::iter::repeat(self.0.clone())
+        iter::repeat(self.0.clone())
     }
 
-    fn get(&self, _index: usize) -> Option<&T> {
-        Some(self.0)
+    fn get<'a>(&'a self, _index: usize) -> impl FnOnce() -> Option<&'a T> where T: 'a {
+        move || Some(self.0)
     }
 
     fn get_range<'a>(&'a self, index: Range<usize>) -> Option<impl Iterator<Item=&'a T>> where T: 'a {
-        Some(std::iter::repeat_n(self.0, index.len()))
+        Some(iter::repeat_n(self.0, index.len()))
+    }
+}
+
+/// Backend that calls a closure with an index for each element
+pub struct FnBackend<T, F>
+where
+    F: FnMut(usize) ->  T
+{
+    func: RefCell<F>,
+    cache: Bump
+}
+
+impl< T, F> FnBackend<T, F>
+where
+    F: FnMut(usize) -> T
+{
+    /// Create a new functional backend from a [`FnMut`] closure.
+    pub fn new(closure: F) -> Self {
+        Self {
+            func: RefCell::new(closure),
+            cache: Bump::new(),
+        }
+    }
+}
+
+
+impl<T, F> Backend<T> for FnBackend<T, F>
+where
+    F: FnMut(usize) -> T
+{
+    fn length(&self) -> usize {
+        usize::MAX
+    }
+
+    fn into_iter_all(self) -> impl Iterator<Item=T> {
+        let mut i = 0;
+        iter::from_fn(move || {
+            let x = self.func.borrow_mut()(i);
+            i += 1;
+            Some(x)
+        })
+    }
+
+    fn get<'a>(&'a self, index: usize) -> impl FnOnce() -> Option<&'a T> where T: 'a
+    {
+        move || Some(self.cache.alloc(self.func.borrow_mut()(index)))
+    }
+
+    fn get_range<'a>(&'a self, index: Range<usize>) -> Option<impl Iterator<Item=&'a T>>
+    where
+        T: 'a,
+    {
+        Some(index.into_iter().map(move |i| &*self.cache.alloc(self.func.borrow_mut()(i))))
     }
 }
 
@@ -287,7 +344,7 @@ impl NumericalValue for usize {
 
 #[cfg(test)]
 mod test {
-    use crate::backend::{Backend, ConstantBackend};
+    use crate::backend::{Backend, ConstantBackend, FnBackend};
 
     #[test]
     fn constant_backend() {
@@ -297,6 +354,31 @@ mod test {
         assert_eq!(iter.next(), Some(&7));
         assert_eq!(iter.next(), Some(&7));
         assert_eq!(iter.next(), Some(&7));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn fn_backend() {
+        let backend = FnBackend::new(|i: usize| 2 * i);
+        let mut iter = backend.get_range(0..4).unwrap();
+        assert_eq!(iter.next(), Some(&0));
+        assert_eq!(iter.next(), Some(&2));
+        assert_eq!(iter.next(), Some(&4));
+        assert_eq!(iter.next(), Some(&6));
+        assert_eq!(iter.next(), None);
+    }
+
+
+    #[test]
+    fn fn_backend_noncopy() {
+        #[derive(Debug, PartialEq)]
+        struct NonCopy(usize);
+        let backend = FnBackend::new(|i: usize| NonCopy(2 * i));
+        let mut iter = backend.get_range(0..4).unwrap();
+        assert_eq!(iter.next(), Some(&NonCopy(0)));
+        assert_eq!(iter.next(), Some(&NonCopy(2)));
+        assert_eq!(iter.next(), Some(&NonCopy(4)));
+        assert_eq!(iter.next(), Some(&NonCopy(6)));
         assert_eq!(iter.next(), None);
     }
 }

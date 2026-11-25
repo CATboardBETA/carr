@@ -225,7 +225,7 @@ where
 
     /// Concatenates two arrays, along the `AXIS` axis.
     pub fn concat<const AXIS: usize, B2, const D2: &'static [usize]>(
-        self,
+        &self,
         other: &Arr<B2, T, D2>,
     ) -> Arr<Vec<T>, T, { CONCAT::<AXIS, D, D2> }>
     where
@@ -239,14 +239,14 @@ where
 
         for i in 0..outer_size {
             let start_a = i * chunk_a;
-            new.extend(self.storage.index_range(start_a..start_a + chunk_a));
+            new.extend_from_slice(&self.storage.index_range(start_a..start_a + chunk_a).cloned().collect::<Vec<_>>());
 
             let start_b = i * chunk_b;
-            new.extend(other.storage.index_range(start_b..start_b + chunk_b));
+            new.extend_from_slice(&other.storage.index_range(start_b..start_b + chunk_b).cloned().collect::<Vec<_>>());
         }
 
         Arr {
-            storage: new.into_iter().cloned().collect(),
+            storage: new,
             _phantom: PhantomData,
         }
     }

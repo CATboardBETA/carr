@@ -44,7 +44,7 @@ where
             .map(|(i, x)| D[(i + 1)..].iter().product::<usize>() * x)
             .sum::<usize>();
         let slice_len = D[AT.len()..].iter().product::<usize>();
-        let out_storage = self.storage().index_range(index..(index + slice_len));
+        let out_storage = self.storage.index_range(index..(index + slice_len));
         Arr {
             storage: out_storage.collect(),
             _phantom: PhantomData,
