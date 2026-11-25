@@ -2,7 +2,7 @@
 //! possible.
 
 use crate::arr::Arr;
-use crate::backend::{Backend, BackendOps};
+use crate::backend::{Backend, InMemBackend};
 use crate::dim::{CONCAT, INDEX_ARR, TOTAL_DIM};
 use crate::dim::{SQUEEZE, TRANSPOSE, UNIT_ARR, UNSQUEEZE};
 use crate::ix;
@@ -12,19 +12,19 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, S
 
 impl<B, T, const D: &'static [usize]> Add for Arr<B, T, D>
 where
-    B: Backend<T> + BackendOps<T>,
+    B: Backend<T>,
     T: Add<Output = T>,
 {
-    type Output = Self;
+    type Output = Arr<Vec<T>, T, D>;
 
     fn add(self, rhs: Self) -> Self::Output {
-        self.apply_ops(rhs, |(x, y)| x + y)
+        self.into_iter().zip(rhs).map(|(x, y)| x + y).collect()
     }
 }
 
 impl<B, T, const D: &'static [usize]> AddAssign for Arr<B, T, D>
 where
-    B: Backend<T>,
+    B: Backend<T> + InMemBackend<T>,
     for<'a> &'a T: Add<Output = T>,
 {
     fn add_assign(&mut self, rhs: Self) {
@@ -40,19 +40,19 @@ where
 
 impl<B, T, const D: &'static [usize]> Sub for Arr<B, T, D>
 where
-    B: Backend<T> + BackendOps<T>,
+    B: Backend<T>,
     T: Sub<Output = T>,
 {
-    type Output = Self;
+    type Output = Arr<Vec<T>, T, D>;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        self.apply_ops(rhs, |(x, y)| x - y)
+        self.into_iter().zip(rhs).map(|(x, y)| x - y).collect()
     }
 }
 
 impl<B, T, const D: &'static [usize]> SubAssign for Arr<B, T, D>
 where
-    B: Backend<T>,
+    B: Backend<T> + InMemBackend<T>,
     for<'a> &'a T: Sub<Output = T>,
 {
     fn sub_assign(&mut self, rhs: Self) {
@@ -68,19 +68,19 @@ where
 
 impl<B, T, const D: &'static [usize]> Mul for Arr<B, T, D>
 where
-    B: Backend<T> + BackendOps<T>,
+    B: Backend<T>,
     T: Mul<Output = T>,
 {
-    type Output = Self;
+    type Output = Arr<Vec<T>, T, D>;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        self.apply_ops(rhs, |(x, y)| x * y)
+        self.into_iter().zip(rhs).map(|(x, y)| x * y).collect()
     }
 }
 
 impl<B, T, const D: &'static [usize]> MulAssign for Arr<B, T, D>
 where
-    B: Backend<T>,
+    B: Backend<T> + InMemBackend<T>,
     for<'a> &'a T: Mul<Output = T>,
 {
     fn mul_assign(&mut self, rhs: Self) {
@@ -96,19 +96,19 @@ where
 
 impl<B, T, const D: &'static [usize]> Div for Arr<B, T, D>
 where
-    B: Backend<T> + BackendOps<T>,
+    B: Backend<T>,
     T: Div<Output = T>,
 {
-    type Output = Self;
+    type Output = Arr<Vec<T>, T, D>;
 
     fn div(self, rhs: Self) -> Self::Output {
-        self.apply_ops(rhs, |(x, y)| x / y)
+        self.into_iter().zip(rhs).map(|(x, y)| x / y).collect()
     }
 }
 
 impl<B, T, const D: &'static [usize]> DivAssign for Arr<B, T, D>
 where
-    B: Backend<T>,
+    B: Backend<T> + InMemBackend<T>,
     for<'a> &'a T: Div<Output = T>,
 {
     fn div_assign(&mut self, rhs: Self) {
@@ -124,19 +124,19 @@ where
 
 impl<B, T, const D: &'static [usize]> Rem for Arr<B, T, D>
 where
-    B: Backend<T> + BackendOps<T>,
+    B: Backend<T>,
     T: Rem<Output = T>,
 {
-    type Output = Self;
+    type Output = Arr<Vec<T>, T, D>;
 
     fn rem(self, rhs: Self) -> Self::Output {
-        self.apply_ops(rhs, |(x, y)| x % y)
+        self.into_iter().zip(rhs).map(|(x, y)| x % y).collect()
     }
 }
 
 impl<B, T, const D: &'static [usize]> RemAssign for Arr<B, T, D>
 where
-    B: Backend<T>,
+    B: Backend<T> + InMemBackend<T>,
     for<'a> &'a T: Rem<Output = T>,
 {
     fn rem_assign(&mut self, rhs: Self) {
@@ -152,11 +152,11 @@ where
 
 impl<B, T, const D: &'static [usize]> Arr<B, T, D>
 where
-    B: Backend<T> + BackendOps<T>,
+    B: Backend<T>,
     T: Clone,
 {
     /// Transpose an array, reflecting along the primary diagonal.
-    pub fn transpose(self) -> Arr<B, T, { TRANSPOSE::<D> }> {
+    pub fn transpose(self) -> Arr<Vec<T>, T, { TRANSPOSE::<D> }> {
         const {
             assert!(D.len() == 2);
         }
@@ -164,13 +164,10 @@ where
         let mut out = Vec::with_capacity(height * width);
         for c in 0..height {
             for r in 0..width {
-                out.push(self.storage[r * height + c].clone());
+                out.push(self.storage.index(r * height + c).clone());
             }
         }
-        Arr {
-            storage: B::from_vec(out).unwrap(),
-            _phantom: PhantomData,
-        }
+        out.into_iter().collect()
     }
 
     /// Squeeze an array - equivalent to removing all extra dimension (where `D[n] == 1`)
@@ -219,15 +216,18 @@ where
     /// Returns a mutable view into `self`. This is equivalent to mutable usage of the [`ix`] macro.
     pub fn view_mut<const V_D: &'static [usize]>(
         &mut self,
-    ) -> Arr<Vec<&mut T>, &mut T, { INDEX_ARR::<D, V_D> }> {
+    ) -> Arr<Vec<&mut T>, &mut T, { INDEX_ARR::<D, V_D> }>
+    where
+        B: InMemBackend<T>,
+    {
         ix!(self => mut V_D)
     }
 
     /// Concatenates two arrays, along the `AXIS` axis.
     pub fn concat<const AXIS: usize, B2, const D2: &'static [usize]>(
-        self,
+        &self,
         other: &Arr<B2, T, D2>,
-    ) -> Arr<B2, T, { CONCAT::<AXIS, D, D2> }>
+    ) -> Arr<Vec<T>, T, { CONCAT::<AXIS, D, D2> }>
     where
         B2: Backend<T>,
     {
@@ -239,13 +239,16 @@ where
 
         for i in 0..outer_size {
             let start_a = i * chunk_a;
-            new.extend_from_slice(&self.storage[start_a..start_a + chunk_a]);
+            new.extend_from_slice(&self.storage.index_range(start_a..start_a + chunk_a).cloned().collect::<Vec<_>>());
 
             let start_b = i * chunk_b;
-            new.extend_from_slice(&other.storage[start_b..start_b + chunk_b]);
+            new.extend_from_slice(&other.storage.index_range(start_b..start_b + chunk_b).cloned().collect::<Vec<_>>());
         }
 
-        new.into_iter().collect()
+        Arr {
+            storage: new,
+            _phantom: PhantomData,
+        }
     }
 }
 
@@ -268,7 +271,10 @@ where
 
     /// In a one-element array, returns a mutable reference to the single element. This works for
     /// arrays with any number of dimensions, so long as each dimension has only one element.
-    pub fn item_mut(&mut self) -> &mut T {
+    pub fn item_mut(&mut self) -> &mut T
+    where
+        B: InMemBackend<T>,
+    {
         self.iter_mut().next().unwrap()
     }
 }

@@ -1,7 +1,7 @@
 //! Indexing operations. Includes a custom trait for indexing with constant dimension,
 
 use crate::arr::Arr;
-use crate::backend::Backend;
+use crate::backend::{Backend, InMemBackend};
 use crate::dim::INDEX_ARR;
 use std::marker::PhantomData;
 
@@ -44,9 +44,9 @@ where
             .map(|(i, x)| D[(i + 1)..].iter().product::<usize>() * x)
             .sum::<usize>();
         let slice_len = D[AT.len()..].iter().product::<usize>();
-        let out_storage: &[T] = &self.storage()[index..(index + slice_len)];
+        let out_storage = self.storage.index_range(index..(index + slice_len));
         Arr {
-            storage: out_storage.iter().collect(),
+            storage: out_storage.collect(),
             _phantom: PhantomData,
         }
     }
@@ -63,7 +63,7 @@ where
 impl<'a, B, T, const D: &'static [usize], const AT: &'static [usize]> IndexConstSliceMut<'a, AT>
     for &'a mut Arr<B, T, D>
 where
-    B: Backend<T>,
+    B: Backend<T> + InMemBackend<T>,
 {
     type Output = Arr<Vec<&'a mut T>, &'a mut T, { INDEX_ARR::<D, AT> }>;
 

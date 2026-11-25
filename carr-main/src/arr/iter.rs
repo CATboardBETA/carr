@@ -1,10 +1,6 @@
 use crate::arr::Arr;
-use crate::backend::Backend;
+use crate::backend::{Backend, InMemBackend};
 use std::marker::PhantomData;
-
-pub struct ArrIterValue<T> {
-    inner: Vec<T>,
-}
 
 pub struct ArrIter<'a, B: Backend<T>, T, const D: &'static [usize]> {
     inner: &'a Arr<B, T, D>,
@@ -13,14 +9,6 @@ pub struct ArrIter<'a, B: Backend<T>, T, const D: &'static [usize]> {
 
 pub struct ArrIterMut<'a, T> {
     inner: Vec<&'a mut T>,
-}
-
-impl<T> Iterator for ArrIterValue<T> {
-    type Item = T;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.inner.pop()
-    }
 }
 
 impl<'a, B: Backend<T>, T: 'a, const D: &'static [usize]> Iterator for ArrIter<'a, B, T, D> {
@@ -64,7 +52,10 @@ where
     }
 
     /// Iterate by exclusive (mutable) reference over an [`Arr`]'s internal storage.
-    pub fn iter_mut(&'a mut self) -> ArrIterMut<'a, T> {
+    pub fn iter_mut(&'a mut self) -> ArrIterMut<'a, T>
+    where
+        B: InMemBackend<T>,
+    {
         self.into_iter()
     }
 }
@@ -74,12 +65,10 @@ where
     B: Backend<T>,
 {
     type Item = T;
-    type IntoIter = ArrIterValue<T>;
+    type IntoIter = impl Iterator<Item = T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        let mut inner = self.storage.into_vec();
-        inner.reverse();
-        ArrIterValue { inner }
+        self.storage.into_iter_all()
     }
 }
 
@@ -98,7 +87,7 @@ where
 
 impl<'a, B, T, const D: &'static [usize]> IntoIterator for &'a mut Arr<B, T, D>
 where
-    B: Backend<T> + 'a,
+    B: Backend<T> + InMemBackend<T> + 'a,
     T: 'a,
 {
     type Item = &'a mut T;
@@ -113,7 +102,7 @@ where
 
 impl<B, T, const D: &'static [usize]> FromIterator<T> for Arr<B, T, D>
 where
-    B: Backend<T>,
+    B: Backend<T> + InMemBackend<T>,
 {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         Self {
