@@ -193,6 +193,7 @@ impl<T> InMemBackend<T> for Vec<T> {
 }
 
 /// Backend that always returns the same value:
+#[derive(Clone, Debug)]
 pub struct ConstantBackend<'a, T: Clone>(&'a T);
 
 impl<'a, T: Clone> ConstantBackend<'a, T> {
@@ -228,6 +229,18 @@ where
 {
     func: RefCell<F>,
     cache: Bump
+}
+
+impl<T, F> Clone for FnBackend<T, F>
+where
+    F: FnMut(usize) ->  T + Clone
+{
+    fn clone(&self) -> Self {
+        Self {
+            func: self.func.clone(),
+            cache: Bump::new(),
+        }
+    }
 }
 
 impl< T, F> FnBackend<T, F>
