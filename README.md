@@ -8,7 +8,7 @@ To install the latest version, simply run
 ```sh
 cargo add carr
 ```
-Or, manually add `carr="0.2"` to your `Cargo.toml` under the dependencies table.
+Or, manually add `carr="0.3"` to your `Cargo.toml` under the dependencies table.
 
 # Usage & Examples
 

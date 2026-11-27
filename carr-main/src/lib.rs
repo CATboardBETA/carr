@@ -5,7 +5,7 @@
 //! ```sh
 //! cargo add carr
 //! ```
-//! Or, for manual installation, add `carr="0.2"` to your `Cargo.toml` under the dependencies table.
+//! Or, for manual installation, add `carr="0.3"` to your `Cargo.toml` under the dependencies table.
 //! # Usage
 //! todo
 //! # Examples
