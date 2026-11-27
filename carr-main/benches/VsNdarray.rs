@@ -70,5 +70,5 @@ fn criterion_benchmark(c: &mut Criterion) {
     c_ndarray.finish();
 }
 
-criterion_group!(name = benches; config = Criterion::default().measurement_time(Duration::from_secs(15)); targets = criterion_benchmark);
+criterion_group!(benches, criterion_benchmark);
 criterion_main!(benches);
