@@ -1,5 +1,4 @@
 use std::hint::black_box;
-use std::time::Duration;
 use criterion::{criterion_group, criterion_main, Criterion};
 use carr::arr::Arr;
 
