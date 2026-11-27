@@ -4,13 +4,13 @@ use crate::arr::Arr;
 use crate::backend::{Backend, InMemBackend};
 use std::cmp::Ordering;
 
-impl<B1, B2, T, const D: &'static [usize]> PartialEq<Arr<B2, T, D>> for Arr<B1, T, D>
+impl<B1, B2, T1, T2, const D: &'static [usize]> PartialEq<Arr<B2, T2, D>> for Arr<B1, T1, D>
 where
-    B1: Backend<T>,
-    B2: Backend<T>,
-    T: PartialEq,
+    B1: Backend<T1>,
+    B2: Backend<T2>,
+    T1: PartialEq<T2>,
 {
-    fn eq(&self, other: &Arr<B2, T, D>) -> bool {
+    fn eq(&self, other: &Arr<B2, T2, D>) -> bool {
         self.iter().zip(other).all(|(x, y)| x == y)
     }
 }
@@ -18,13 +18,17 @@ where
 impl<B, T, const D: &'static [usize]> Arr<B, T, D>
 where
     B: Backend<T>,
-    T: PartialOrd + Clone,
+
 {
     /// Compare two arrays elementwise. This should be used when all three `Orderings` are used, not
     /// to do simple comparisons e.g. `x < y`. If doing basic comparisons, use the other associated
     /// methods, e.g. [`Arr::lt`]
     #[must_use]
-    pub fn partial_cmp(&self, other: &Self) -> Arr<Vec<Option<Ordering>>, Option<Ordering>, D> {
+    pub fn partial_cmp<B2, T2>(&self, other: &Arr<B2, T2, D>) -> Arr<Vec<Option<Ordering>>, Option<Ordering>, D>
+    where
+        B2: Backend<T2>,
+        T: PartialOrd<T2>
+    {
         self.iter()
             .zip(other)
             .map(|(x, y)| x.partial_cmp(y))
@@ -36,7 +40,10 @@ where
     ///
     /// Stored in a bool array with the same dimensions as the input.
     #[must_use]
-    pub fn lt(&self, other: &Self) -> Arr<Vec<bool>, bool, D> {
+    pub fn lt<B2, T2>(&self, other: &Arr<B2, T2, D>) -> Arr<Vec<bool>, bool, D>
+    where
+        B2: Backend<T2>,
+        T: PartialOrd<T2> {
         self.iter().zip(other).map(|(x, y)| x < y).collect()
     }
 
@@ -45,7 +52,10 @@ where
     ///
     /// Stored in a bool array with the same dimensions as the input.
     #[must_use]
-    pub fn le(&self, other: &Self) -> Arr<Vec<bool>, bool, D> {
+    pub fn le<B2, T2>(&self, other: &Arr<B2, T2, D>) -> Arr<Vec<bool>, bool, D>
+    where
+        B2: Backend<T2>,
+        T: PartialOrd<T2>{
         self.iter().zip(other).map(|(x, y)| x <= y).collect()
     }
 
@@ -54,7 +64,10 @@ where
     ///
     /// Stored in a bool array with the same dimensions as the input.
     #[must_use]
-    pub fn gt(&self, other: &Self) -> Arr<Vec<bool>, bool, D> {
+    pub fn gt<B2, T2>(&self, other: &Arr<B2, T2, D>) -> Arr<Vec<bool>, bool, D>
+    where
+        B2: Backend<T2>,
+        T: PartialOrd<T2>{
         self.iter().zip(other).map(|(x, y)| x > y).collect()
     }
 
@@ -63,7 +76,10 @@ where
     ///
     /// Stored in a bool array with the same dimensions as the input.
     #[must_use]
-    pub fn ge(&self, other: &Self) -> Arr<Vec<bool>, bool, D> {
+    pub fn ge<B2, T2>(&self, other: &Arr<B2, T2, D>) -> Arr<Vec<bool>, bool, D>
+    where
+        B2: Backend<T2>,
+        T: PartialOrd<T2>{
         self.iter().zip(other).map(|(x, y)| x >= y).collect()
     }
 
@@ -72,7 +88,10 @@ where
     ///
     /// Stored in a bool array with the same dimensions as the input.
     #[must_use]
-    pub fn eq(&self, other: &Self) -> Arr<Vec<bool>, bool, D> {
+    pub fn eq<B2, T2>(&self, other: &Arr<B2, T2, D>) -> Arr<Vec<bool>, bool, D>
+    where
+        B2: Backend<T2>,
+        T: PartialOrd<T2>{
         self.iter().zip(other).map(|(x, y)| x == y).collect()
     }
 
@@ -81,7 +100,10 @@ where
     ///
     /// Stored in a bool array with the same dimensions as the input.
     #[must_use]
-    pub fn ne(&self, other: &Self) -> Arr<Vec<bool>, bool, D> {
+    pub fn ne<B2, T2>(&self, other: &Arr<B2, T2, D>) -> Arr<Vec<bool>, bool, D>
+    where
+        B2: Backend<T2>,
+        T: PartialOrd<T2>{
         self.iter().zip(other).map(|(x, y)| x != y).collect()
     }
 }
@@ -215,7 +237,7 @@ mod test {
     }
 
     #[test]
-    fn partial_cmp_ops() {
+    fn partial_cmp_ops_1() {
         let a = Arr::<_, _, { &[3] }>::from([1., 2., 3.]);
         let b = Arr::<_, _, { &[3] }>::from([3., 2., 1.]);
         let lt = Arr::<_, _, { &[3] }>::from([true, false, false]);
@@ -230,6 +252,51 @@ mod test {
         assert_eq!(a.gt(&b), gt);
         assert_eq!(a.ge(&b), ge);
         assert_eq!(a.ne(&b), ne);
+    }
+
+
+    #[test]
+    fn partial_cmp_ops_2() {
+        struct I(i32);
+        impl PartialEq<i64> for I {
+            fn eq(&self, other: &i64) -> bool {
+                &i64::from(self.0) == other
+            }
+        }
+        impl PartialOrd<i64> for I {
+            fn partial_cmp(&self, other: &i64) -> Option<Ordering> {
+                i64::from(self.0).partial_cmp(other)
+            }
+        }
+
+        let a = Arr::<_, _, { &[3] }>::from([I(1), I(2), I(3)]);
+        let b = Arr::<_, _, { &[3] }>::from([3, 2, 1]);
+
+        let lt = Arr::<_, _, { &[3] }>::from([true, false, false]);
+        let le = Arr::<_, _, { &[3] }>::from([true, true, false]);
+        let eq = Arr::<_, _, { &[3] }>::from([false, true, false]);
+        let gt = Arr::<_, _, { &[3] }>::from([false, false, true]);
+        let ge = Arr::<_, _, { &[3] }>::from([false, true, true]);
+        let ne = Arr::<_, _, { &[3] }>::from([true, false, true]);
+        assert_eq!(a.lt(&b), lt);
+        assert_eq!(a.le(&b), le);
+        assert_eq!(a.eq(&b), eq);
+        assert_eq!(a.gt(&b), gt);
+        assert_eq!(a.ge(&b), ge);
+        assert_eq!(a.ne(&b), ne);
+    }
+
+    #[test]
+    fn partial_eq() {
+        struct I(i32);
+        impl PartialEq<i64> for I {
+            fn eq(&self, other: &i64) -> bool {
+                &i64::from(self.0) == other
+            }
+        }
+        let a = Arr::<_, I, { &[3] }>::from([I(1), I(2), I(3)]);
+        let b = Arr::<_, i64, { &[3] }>::from([3, 2, 1]);
+        assert!(a != b);
     }
 
     #[test]

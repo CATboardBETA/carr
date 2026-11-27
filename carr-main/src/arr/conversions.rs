@@ -23,7 +23,9 @@ where
 {
     /// Convert from a [`Backend`]-implementor directly into an array, without copying.
     pub fn from(storage: B) -> Self {
-        assert_eq!(storage.length(), TOTAL_DIM::<D>);
+        // >=, not ==, because backends that aren't in memory (e.g. functional backends) have an
+        // infinite size (usize::MAX, to be precise)
+        assert!(storage.length() >= TOTAL_DIM::<D>);
         Self {
             storage,
             _phantom: PhantomData,
