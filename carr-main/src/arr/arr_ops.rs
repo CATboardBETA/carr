@@ -5,7 +5,7 @@ use crate::arr::Arr;
 use crate::backend::{Backend, InMemBackend};
 use crate::dim::{CONCAT, INDEX_ARR, TOTAL_DIM};
 use crate::dim::{SQUEEZE, TRANSPOSE, UNIT_ARR, UNSQUEEZE};
-use crate::ix;
+use crate::{ix, ArrMut, ArrRef};
 use crate::prop::{Prop, PropTrue};
 use std::marker::PhantomData;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
@@ -209,14 +209,14 @@ where
 
     /// Views specific dimensions of an array; returns a [`Arr`] of references. This is equivalent to
     /// immutable usage of the [`ix`] macro.
-    pub fn view<const V_D: &'static [usize]>(&self) -> Arr<Vec<&T>, &T, { INDEX_ARR::<D, V_D> }> {
+    pub fn view<const V_D: &'static [usize]>(&self) -> ArrRef<'_, T, { INDEX_ARR::<D, V_D> }> {
         ix!(self => V_D)
     }
 
     /// Returns a mutable view into `self`. This is equivalent to mutable usage of the [`ix`] macro.
     pub fn view_mut<const V_D: &'static [usize]>(
         &mut self,
-    ) -> Arr<Vec<&mut T>, &mut T, { INDEX_ARR::<D, V_D> }>
+    ) -> ArrMut<'_, T, { INDEX_ARR::<D, V_D> }>
     where
         B: InMemBackend<T>,
     {
