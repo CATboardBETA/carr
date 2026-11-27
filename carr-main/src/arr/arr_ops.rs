@@ -213,6 +213,11 @@ where
         ix!(self => V_D)
     }
 
+    /// Views the entirety of an array, immutably.
+    pub fn view_all(&self) -> Arr<Vec<&T>, &T, D> {
+        self.iter().collect()
+    }
+
     /// Returns a mutable view into `self`. This is equivalent to mutable usage of the [`ix`] macro.
     pub fn view_mut<const V_D: &'static [usize]>(
         &mut self,
@@ -221,6 +226,16 @@ where
         B: InMemBackend<T>,
     {
         ix!(self => mut V_D)
+    }
+
+
+    /// Views the entirety of an array, mutably. Note that this only works on arrays with an
+    /// in-memory backend, for functional backends are immutable.
+    pub fn view_mut_all(&mut self) -> Arr<Vec<&mut T>, &mut T, D>
+    where
+        B: InMemBackend<T>
+    {
+        self.iter_mut().collect()
     }
 
     /// Concatenates two arrays, along the `AXIS` axis.
