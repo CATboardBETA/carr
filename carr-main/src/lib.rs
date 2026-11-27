@@ -43,9 +43,10 @@ pub mod prop;
 /// An owned array. This is just a type alias for an array with [`Vec<T>`] as the backend.
 pub type ArrOwn<T, const D: &'static [usize]> = Arr<Vec<T>, T, D>;
 
-/// An immutably borrowed array. This is just a type alias for an array with [`Vec<&T>`] as the backend.
+/// An immutably borrowed array. This is just a type alias for an array with [`Vec<&T>`] as the
+/// backend.
 pub type ArrRef<'a, T, const D: &'static [usize]> = Arr<Vec<&'a T>, &'a T, D>;
 
-/// A mutably borrowed array. This is just a type alias for an array with [`Vec<&mut T>`](Vec<T>) as 
+/// A mutably borrowed array. This is just a type alias for an array with [`Vec<&mut T>`](Vec<T>) as
 /// the backend
 pub type ArrMut<'a, T, const D: &'static [usize]> = Arr<Vec<&'a mut T>, &'a mut T, D>;
