@@ -52,7 +52,7 @@ where
     }
 
     fn try_index(&self) -> Option<Self::Output> {
-        if D.len() < AT.len() {
+        if D.len() < AT.len() || AT.iter().zip(D).any(|(at, d)| at >= d) {
             None
         } else {
             Some(IndexConstSlice::<AT>::index(self))
@@ -85,7 +85,7 @@ where
     }
 
     fn try_index_mut(self) -> Option<Self::Output> {
-        if D.len() < AT.len() {
+        if D.len() < AT.len() || AT.iter().zip(D).any(|(at, d)| at >= d) {
             None
         } else {
             Some(IndexConstSliceMut::<AT>::index_mut(self))
