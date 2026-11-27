@@ -10,145 +10,77 @@ use crate::prop::{Prop, PropTrue};
 use std::marker::PhantomData;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
 
-impl<B, T, const D: &'static [usize]> Add for Arr<B, T, D>
-where
-    B: Backend<T>,
-    T: Add<Output = T>,
-{
-    type Output = Arr<Vec<T>, T, D>;
+macro_rules! ops {
+    ($($Trait:ident, $TraitAssign:ident, $f:ident, $f_assign:ident, $tt:tt);* $(;)?) => {
+        $(
+        impl<B1, B2, T, const D: &'static [usize]> $Trait<Arr<B2, T, D>> for Arr<B1, T, D>
+        where
+            B1: Backend<T>,
+            B2: Backend<T>,
+            T: $Trait<Output = T>,
+        {
+            type Output = Arr<Vec<T>, T, D>;
 
-    fn add(self, rhs: Self) -> Self::Output {
-        self.into_iter().zip(rhs).map(|(x, y)| x + y).collect()
-    }
+            fn $f(self, rhs: Arr<B2, T, D>) -> Self::Output {
+                self.into_iter().zip(rhs).map(|(x, y)| x $tt y).collect()
+            }
+        }
+
+        impl<B, T, const D: &'static [usize]> $Trait<T> for Arr<B, T, D>
+        where
+            B: Backend<T>,
+            T: $Trait<Output = T> + Clone,
+        {
+            type Output = Arr<Vec<T>, T, D>;
+
+            fn $f(self, rhs: T) -> Self::Output {
+                self.into_iter().map(|x| x $tt rhs.clone()).collect()
+            }
+        }
+
+        impl<B1, B2, T, const D: &'static [usize]> $TraitAssign<Arr<B2, T, D>> for Arr<B1, T, D>
+        where
+            B1: Backend<T> + InMemBackend<T>,
+            B2: Backend<T>,
+            for<'a> &'a T: $Trait<Output = T>,
+        {
+            fn $f_assign(&mut self, rhs: Arr<B2, T, D>) {
+                *self.storage_mut() = B1::from_vec(
+                    self.iter()
+                        .zip(rhs.iter())
+                        .map(|(l, r)| l $tt r)
+                        .collect::<Vec<_>>(),
+                )
+                .unwrap();
+            }
+        }
+
+        impl<B, T, const D: &'static [usize]> $TraitAssign<T> for Arr<B, T, D>
+        where
+            B: Backend<T> + InMemBackend<T>,
+            for<'a> &'a T: $Trait<Output = T>,
+        {
+            fn $f_assign(&mut self, rhs: T) {
+                *self.storage_mut() = B::from_vec(
+                    self.iter()
+                        .map(|l| l $tt &rhs)
+                        .collect::<Vec<_>>(),
+                )
+                .unwrap();
+            }
+        }
+        )*
+    };
 }
 
-impl<B, T, const D: &'static [usize]> AddAssign for Arr<B, T, D>
-where
-    B: Backend<T> + InMemBackend<T>,
-    for<'a> &'a T: Add<Output = T>,
-{
-    fn add_assign(&mut self, rhs: Self) {
-        *self.storage_mut() = B::from_vec(
-            self.iter()
-                .zip(rhs.iter())
-                .map(|(l, r)| l + r)
-                .collect::<Vec<_>>(),
-        )
-        .unwrap();
-    }
-}
+ops!(
+    Add, AddAssign, add, add_assign, +;
+    Sub, SubAssign, sub, sub_assign, -;
+    Mul, MulAssign, mul, mul_assign, *;
+    Div, DivAssign, div, div_assign, /;
+    Rem, RemAssign, rem, rem_assign, %;
+);
 
-impl<B, T, const D: &'static [usize]> Sub for Arr<B, T, D>
-where
-    B: Backend<T>,
-    T: Sub<Output = T>,
-{
-    type Output = Arr<Vec<T>, T, D>;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        self.into_iter().zip(rhs).map(|(x, y)| x - y).collect()
-    }
-}
-
-impl<B, T, const D: &'static [usize]> SubAssign for Arr<B, T, D>
-where
-    B: Backend<T> + InMemBackend<T>,
-    for<'a> &'a T: Sub<Output = T>,
-{
-    fn sub_assign(&mut self, rhs: Self) {
-        *self.storage_mut() = B::from_vec(
-            self.iter()
-                .zip(rhs.iter())
-                .map(|(l, r)| l - r)
-                .collect::<Vec<_>>(),
-        )
-        .unwrap();
-    }
-}
-
-impl<B, T, const D: &'static [usize]> Mul for Arr<B, T, D>
-where
-    B: Backend<T>,
-    T: Mul<Output = T>,
-{
-    type Output = Arr<Vec<T>, T, D>;
-
-    fn mul(self, rhs: Self) -> Self::Output {
-        self.into_iter().zip(rhs).map(|(x, y)| x * y).collect()
-    }
-}
-
-impl<B, T, const D: &'static [usize]> MulAssign for Arr<B, T, D>
-where
-    B: Backend<T> + InMemBackend<T>,
-    for<'a> &'a T: Mul<Output = T>,
-{
-    fn mul_assign(&mut self, rhs: Self) {
-        *self.storage_mut() = B::from_vec(
-            self.iter()
-                .zip(rhs.iter())
-                .map(|(l, r)| l * r)
-                .collect::<Vec<_>>(),
-        )
-        .unwrap();
-    }
-}
-
-impl<B, T, const D: &'static [usize]> Div for Arr<B, T, D>
-where
-    B: Backend<T>,
-    T: Div<Output = T>,
-{
-    type Output = Arr<Vec<T>, T, D>;
-
-    fn div(self, rhs: Self) -> Self::Output {
-        self.into_iter().zip(rhs).map(|(x, y)| x / y).collect()
-    }
-}
-
-impl<B, T, const D: &'static [usize]> DivAssign for Arr<B, T, D>
-where
-    B: Backend<T> + InMemBackend<T>,
-    for<'a> &'a T: Div<Output = T>,
-{
-    fn div_assign(&mut self, rhs: Self) {
-        *self.storage_mut() = B::from_vec(
-            self.iter()
-                .zip(rhs.iter())
-                .map(|(l, r)| l / r)
-                .collect::<Vec<_>>(),
-        )
-        .unwrap();
-    }
-}
-
-impl<B, T, const D: &'static [usize]> Rem for Arr<B, T, D>
-where
-    B: Backend<T>,
-    T: Rem<Output = T>,
-{
-    type Output = Arr<Vec<T>, T, D>;
-
-    fn rem(self, rhs: Self) -> Self::Output {
-        self.into_iter().zip(rhs).map(|(x, y)| x % y).collect()
-    }
-}
-
-impl<B, T, const D: &'static [usize]> RemAssign for Arr<B, T, D>
-where
-    B: Backend<T> + InMemBackend<T>,
-    for<'a> &'a T: Rem<Output = T>,
-{
-    fn rem_assign(&mut self, rhs: Self) {
-        *self.storage_mut() = B::from_vec(
-            self.iter()
-                .zip(rhs.iter())
-                .map(|(l, r)| l % r)
-                .collect::<Vec<_>>(),
-        )
-        .unwrap();
-    }
-}
 
 impl<B, T, const D: &'static [usize]> Arr<B, T, D>
 where
