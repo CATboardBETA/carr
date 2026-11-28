@@ -1,9 +1,11 @@
 //! Basic [`From`]/[`Into`] conversions from common types into an array.
 
 use crate::arr::Arr;
-use crate::backend::Backend;
-use crate::dim::TOTAL_DIM;
+use crate::backend::{Backend, InMemBackend};
+use crate::dim::{TOTAL_DIM, UNIT_ARR};
 use std::marker::PhantomData;
+use std::ops::{Deref, DerefMut};
+use crate::prop::{Prop, PropTrue};
 
 impl<T, const N: usize, const D: &'static [usize]> From<[T; N]> for Arr<[T; N], T, D>
 where
@@ -30,5 +32,27 @@ where
             storage,
             _phantom: PhantomData,
         }
+    }
+}
+
+impl<B, T, const D: &'static [usize]> Deref for Arr<B, T, D>
+where
+    B: Backend<T>,
+    Prop<{ UNIT_ARR::<D> }>: PropTrue
+{
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        self.item_ref()
+    }
+}
+
+impl<B, T, const D: &'static [usize]> DerefMut for Arr<B, T ,D>
+where
+    B: Backend<T> + InMemBackend<T>,
+    Prop<{ UNIT_ARR::<D> }>: PropTrue
+{
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.item_mut()
     }
 }
