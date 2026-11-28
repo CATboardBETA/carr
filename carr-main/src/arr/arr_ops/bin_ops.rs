@@ -1,6 +1,6 @@
 use crate::arr::Arr;
 use crate::backend::{Backend, InMemBackend};
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign};
 
 macro_rules! ops {
     ($($Trait:ident, $TraitAssign:ident, $f:ident, $f_assign:ident, $tt:tt);* $(;)?) => {
@@ -44,6 +44,11 @@ ops!(
     Mul, MulAssign, mul, mul_assign, *;
     Div, DivAssign, div, div_assign, /;
     Rem, RemAssign, rem, rem_assign, %;
+    BitAnd, BitAndAssign, bitand, bitand_assign, &;
+    BitOr, BitOrAssign, bitor, bitor_assign, |;
+    BitXor, BitXorAssign, bitxor, bitxor_assign, ^;
+    Shl, ShlAssign, shl, shl_assign, <<;
+    Shr, ShrAssign, shr, shr_assign, >>;
 );
 
 #[cfg(test)]
@@ -118,6 +123,56 @@ mod test {
         let expected = Arr::from([0, 2, 1, 3 % (-3), 2, (-2) % (-2)]);
         assert_eq!(arr1.clone() % arr2.clone(), expected);
         arr1 %= arr2;
+        assert_eq!(arr1, expected);
+    }
+
+    #[test]
+    fn bitand() {
+        let mut arr1 = Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]);
+        let arr2 = Arr::from([1, 3, 8, -3, -4, -2]);
+        let expected = Arr::from([3 & 1, 2 & 3, 1 & 8, 3 & -3, 2 & -4, -2 & -2]);
+        assert_eq!(arr1.clone() & arr2.clone(), expected);
+        arr1 &= arr2;
+        assert_eq!(arr1, expected);
+    }
+
+    #[test]
+    fn bitor() {
+        let mut arr1 = Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]);
+        let arr2 = Arr::from([1, 3, 8, -3, -4, -2]);
+        let expected = Arr::from([3 | 1, 2 | 3, 1 | 8, 3 | -3, 2 | -4, -2 | -2]);
+        assert_eq!(arr1.clone() | arr2.clone(), expected);
+        arr1 |= arr2;
+        assert_eq!(arr1, expected);
+    }
+
+    #[test]
+    fn bitxor() {
+        let mut arr1 = Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]);
+        let arr2 = Arr::from([1, 3, 8, -3, -4, -2]);
+        let expected = Arr::from([3 ^ 1, 2 ^ 3, 1 ^ 8, 3 ^ -3, 2 ^-4, -2 ^ -2]);
+        assert_eq!(arr1.clone() ^ arr2.clone(), expected);
+        arr1 ^= arr2;
+        assert_eq!(arr1, expected);
+    }
+
+    #[test]
+    fn shl() {
+        let mut arr1 = Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]);
+        let arr2 = Arr::from([1, 3, 8, 3, 4, 2]);
+        let expected = Arr::from([3 << 1, 2 << 3, 1 << 8, 3 << 3, 2 << 4, -2 << 2]);
+        assert_eq!(arr1.clone() << arr2.clone(), expected);
+        arr1 <<= arr2;
+        assert_eq!(arr1, expected);
+    }
+
+    #[test]
+    fn shr() {
+        let mut arr1 = Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]);
+        let arr2 = Arr::from([1, 3, 8, 3, 4, 2]);
+        let expected = Arr::from([3 >> 1, 2 >> 3, 1 >> 8, 3 >> 3, 2 >> 4, -2 >> 2]);
+        assert_eq!(arr1.clone() >> arr2.clone(), expected);
+        arr1 >>= arr2;
         assert_eq!(arr1, expected);
     }
 }
