@@ -13,7 +13,7 @@ where
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         if D.is_empty() {
-            return write!(f, "Scalar {}", self.into_iter().next().unwrap())
+            return write!(f, "Scalar {}", self.into_iter().next().unwrap());
         }
 
         let mut dims_left = D.len();
@@ -70,7 +70,7 @@ where
 impl<B, T, const D: &'static [usize]> Debug for Arr<B, T, D>
 where
     B: Backend<T> + Clone,
-    T:  Display,
+    T: Display,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{self}")

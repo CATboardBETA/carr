@@ -1,17 +1,17 @@
-use std::marker::PhantomData;
 use crate::arr::Arr;
 use crate::backend::Backend;
 use crate::dim::{SQUEEZE, TRANSPOSE, UNSQUEEZE};
+use std::marker::PhantomData;
 
-impl<B, T, const D: &'static [usize]> Arr<B, T, D> 
+impl<B, T, const D: &'static [usize]> Arr<B, T, D>
 where
-    B: Backend<T>
+    B: Backend<T>,
 {
     // Not sure if this is the best module for transpose, but ig I can always change it later
     /// Transpose an array, reflecting along the primary diagonal.
-    pub fn transpose(self) -> Arr<Vec<T>, T, { TRANSPOSE::<D> }> 
+    pub fn transpose(self) -> Arr<Vec<T>, T, { TRANSPOSE::<D> }>
     where
-        T: Clone
+        T: Clone,
     {
         const {
             assert!(D.len() == 2);
@@ -25,7 +25,7 @@ where
         }
         out.into_iter().collect()
     }
-    
+
     /// Squeeze an array - equivalent to removing all extra dimension (where `D[n] == 1`)
     pub fn squeeze(self) -> Arr<B, T, { SQUEEZE::<D> }> {
         // Just a reshape to specific dims.
@@ -67,7 +67,7 @@ where
 #[cfg(test)]
 mod test {
     use crate::arr::Arr;
-    
+
     #[test]
     fn transpose() {
         let arr1 = Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]);
@@ -75,7 +75,7 @@ mod test {
         let transposed = arr1.transpose();
         assert_eq!(transposed, expected);
     }
-    
+
     #[test]
     fn squeeze_1() {
         let arr1 = Arr::<_, _, { &[2, 3] }>::from([3, 2, 1, 3, 2, -2]);
@@ -83,7 +83,7 @@ mod test {
         let squeezed = arr1.squeeze();
         assert_eq!(squeezed, expected);
     }
-    
+
     #[test]
     fn squeeze_2() {
         let arr1 = Arr::<_, _, { &[1, 2, 3] }>::from([3, 2, 1, 3, 2, -2]);
@@ -91,7 +91,7 @@ mod test {
         let squeezed = arr1.squeeze();
         assert_eq!(squeezed, expected);
     }
-    
+
     #[test]
     fn squeeze_3() {
         let arr1 = Arr::<_, _, { &[1, 2, 1, 3, 1] }>::from([3, 2, 1, 3, 2, -2]);

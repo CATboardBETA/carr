@@ -1,12 +1,12 @@
 use crate::arr::Arr;
 use crate::backend::{Backend, InMemBackend};
 use crate::dim::{INDEX_ARR, UNIT_ARR};
-use crate::{ix, ArrMut, ArrRef};
 use crate::prop::{Prop, PropTrue};
+use crate::{ArrMut, ArrRef, ix};
 
 impl<B, T, const D: &'static [usize]> Arr<B, T, D>
 where
-    B: Backend<T>
+    B: Backend<T>,
 {
     /// Views specific dimensions of an array; returns a [`Arr`] of references. This is equivalent to
     /// immutable usage of the [`ix`] macro.
@@ -29,12 +29,11 @@ where
         ix!(self => mut V_D)
     }
 
-
     /// Views the entirety of an array, mutably. Note that this only works on arrays with an
     /// in-memory backend, for functional backends are immutable.
     pub fn view_mut_all(&mut self) -> ArrMut<'_, T, D>
     where
-        B: InMemBackend<T>
+        B: InMemBackend<T>,
     {
         self.iter_mut().collect()
     }

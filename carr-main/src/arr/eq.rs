@@ -18,16 +18,18 @@ where
 impl<B, T, const D: &'static [usize]> Arr<B, T, D>
 where
     B: Backend<T>,
-
 {
     /// Compare two arrays elementwise. This should be used when all three `Orderings` are used, not
     /// to do simple comparisons e.g. `x < y`. If doing basic comparisons, use the other associated
     /// methods, e.g. [`Arr::lt`]
     #[must_use]
-    pub fn partial_cmp<B2, T2>(&self, other: &Arr<B2, T2, D>) -> Arr<Vec<Option<Ordering>>, Option<Ordering>, D>
+    pub fn partial_cmp<B2, T2>(
+        &self,
+        other: &Arr<B2, T2, D>,
+    ) -> Arr<Vec<Option<Ordering>>, Option<Ordering>, D>
     where
         B2: Backend<T2>,
-        T: PartialOrd<T2>
+        T: PartialOrd<T2>,
     {
         self.iter()
             .zip(other)
@@ -43,7 +45,8 @@ where
     pub fn lt<B2, T2>(&self, other: &Arr<B2, T2, D>) -> Arr<Vec<bool>, bool, D>
     where
         B2: Backend<T2>,
-        T: PartialOrd<T2> {
+        T: PartialOrd<T2>,
+    {
         self.iter().zip(other).map(|(x, y)| x < y).collect()
     }
 
@@ -55,7 +58,8 @@ where
     pub fn le<B2, T2>(&self, other: &Arr<B2, T2, D>) -> Arr<Vec<bool>, bool, D>
     where
         B2: Backend<T2>,
-        T: PartialOrd<T2>{
+        T: PartialOrd<T2>,
+    {
         self.iter().zip(other).map(|(x, y)| x <= y).collect()
     }
 
@@ -67,7 +71,8 @@ where
     pub fn gt<B2, T2>(&self, other: &Arr<B2, T2, D>) -> Arr<Vec<bool>, bool, D>
     where
         B2: Backend<T2>,
-        T: PartialOrd<T2>{
+        T: PartialOrd<T2>,
+    {
         self.iter().zip(other).map(|(x, y)| x > y).collect()
     }
 
@@ -79,7 +84,8 @@ where
     pub fn ge<B2, T2>(&self, other: &Arr<B2, T2, D>) -> Arr<Vec<bool>, bool, D>
     where
         B2: Backend<T2>,
-        T: PartialOrd<T2>{
+        T: PartialOrd<T2>,
+    {
         self.iter().zip(other).map(|(x, y)| x >= y).collect()
     }
 
@@ -91,7 +97,8 @@ where
     pub fn eq<B2, T2>(&self, other: &Arr<B2, T2, D>) -> Arr<Vec<bool>, bool, D>
     where
         B2: Backend<T2>,
-        T: PartialOrd<T2>{
+        T: PartialOrd<T2>,
+    {
         self.iter().zip(other).map(|(x, y)| x == y).collect()
     }
 
@@ -103,7 +110,8 @@ where
     pub fn ne<B2, T2>(&self, other: &Arr<B2, T2, D>) -> Arr<Vec<bool>, bool, D>
     where
         B2: Backend<T2>,
-        T: PartialOrd<T2>{
+        T: PartialOrd<T2>,
+    {
         self.iter().zip(other).map(|(x, y)| x != y).collect()
     }
 }
@@ -253,7 +261,6 @@ mod test {
         assert_eq!(a.ge(&b), ge);
         assert_eq!(a.ne(&b), ne);
     }
-
 
     #[test]
     fn partial_cmp_ops_2() {

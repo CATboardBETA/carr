@@ -14,7 +14,6 @@ fn main() {
     let arr_view = arr_owned.view_all();
     println!("View backend array: {arr_view}");
 
-
     // Constant backends allow for a backend that infinitely returns the same element.
     //
     // This one has a datatype of &'static str, and a backend type of
@@ -34,17 +33,17 @@ fn main() {
     let arr_const = Arr::<
         /* Backend = */ ConstantBackend<String>,
         /* Data Type = */ String,
-        /* Dimensions */ { &[3, 2] }
-        >::from(ConstantBackend::new(&s));
+        /* Dimensions */ { &[3, 2] },
+    >::from(ConstantBackend::new(&s));
     println!("Const backend array: {arr_const}");
 
     // Functional backends take a closure `FnMut(usize) -> T` to map indices to a value. A simple
     // example is below:
-    let func_backend = FnBackend::new(|i| 2*i);
+    let func_backend = FnBackend::new(|i| 2 * i);
     let arr_fn = Arr::<
         /* Backend = */ FnBackend<usize, /* Closure Type = */ _>,
         /* Data Type = */ usize,
-        /* Dimensions */ { &[2, 3] }
+        /* Dimensions */ { &[2, 3] },
     >::from(func_backend);
     println!("Functional backend array: {arr_fn}");
 }

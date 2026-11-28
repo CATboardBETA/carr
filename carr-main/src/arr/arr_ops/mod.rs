@@ -1,6 +1,6 @@
 //! Operations applied to arrays. These are implemented using traits in [`std::ops`] whenever
-//! possible. 
-//! 
+//! possible.
+//!
 //! All actual implementations are in private submodules.
 
 mod bin_ops;

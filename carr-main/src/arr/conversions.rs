@@ -3,9 +3,9 @@
 use crate::arr::Arr;
 use crate::backend::{Backend, InMemBackend};
 use crate::dim::{TOTAL_DIM, UNIT_ARR};
+use crate::prop::{Prop, PropTrue};
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
-use crate::prop::{Prop, PropTrue};
 
 impl<T, const N: usize, const D: &'static [usize]> From<[T; N]> for Arr<[T; N], T, D>
 where
@@ -38,7 +38,7 @@ where
 impl<B, T, const D: &'static [usize]> Deref for Arr<B, T, D>
 where
     B: Backend<T>,
-    Prop<{ UNIT_ARR::<D> }>: PropTrue
+    Prop<{ UNIT_ARR::<D> }>: PropTrue,
 {
     type Target = T;
 
@@ -47,10 +47,10 @@ where
     }
 }
 
-impl<B, T, const D: &'static [usize]> DerefMut for Arr<B, T ,D>
+impl<B, T, const D: &'static [usize]> DerefMut for Arr<B, T, D>
 where
     B: Backend<T> + InMemBackend<T>,
-    Prop<{ UNIT_ARR::<D> }>: PropTrue
+    Prop<{ UNIT_ARR::<D> }>: PropTrue,
 {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.item_mut()

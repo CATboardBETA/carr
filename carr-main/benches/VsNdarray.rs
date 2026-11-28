@@ -1,7 +1,7 @@
+use carr::arr::Arr;
+use criterion::{Criterion, criterion_group, criterion_main};
 use std::hint::black_box;
 use std::time::Duration;
-use criterion::{criterion_group, criterion_main, Criterion};
-use carr::arr::Arr;
 
 fn carr_small() {
     let arr = Arr::<Vec<i32>, i32, { &[5; 1] }>::new_ones();
@@ -21,8 +21,6 @@ fn carr_large() {
     let _ = black_box(arr2) + black_box(arr);
 }
 
-
-
 fn carr_huge() {
     let arr = Arr::<Vec<i32>, i32, { &[5; 8] }>::new_ones();
     let arr2 = Arr::<Vec<i32>, i32, { &[5; 8] }>::new_ones();
@@ -34,7 +32,6 @@ fn ndarray_small() {
     let arr2 = ndarray::Array1::<i32>::ones(5);
     let _ = black_box(arr2) + black_box(arr);
 }
-
 
 fn ndarray_medium() {
     let arr = ndarray::Array3::<i32>::ones([5, 5, 5]);

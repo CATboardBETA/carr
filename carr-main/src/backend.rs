@@ -5,13 +5,13 @@ use bumpalo::Bump;
 use bytemuck::Pod;
 use itertools::Itertools;
 #[cfg(feature = "rand")]
-use rand::distr::uniform::SampleUniform;
-#[cfg(feature = "rand")]
-use rand::distr::Distribution;
-#[cfg(feature = "rand")]
 use rand::Rng;
 #[cfg(feature = "rand")]
 use rand::RngExt;
+#[cfg(feature = "rand")]
+use rand::distr::Distribution;
+#[cfg(feature = "rand")]
+use rand::distr::uniform::SampleUniform;
 use std::cell::RefCell;
 use std::ops::{Index, IndexMut, Range};
 use std::{array, iter};
@@ -31,19 +31,26 @@ pub trait Backend<T>: Sized {
     fn into_iter_all(self) -> impl Iterator<Item = T>;
 
     /// Gets a value from a specific index
-    fn get<'a>(&'a self, index: usize) -> impl FnOnce() -> Option<&'a T> where T: 'a;
+    fn get<'a>(&'a self, index: usize) -> impl FnOnce() -> Option<&'a T>
+    where
+        T: 'a;
 
     /// Gets a range of values from a range of indices
-    fn get_range<'a>(&'a self, index: Range<usize>) -> Option<impl Iterator<Item=&'a T>> where T: 'a;
+    fn get_range<'a>(&'a self, index: Range<usize>) -> Option<impl Iterator<Item = &'a T>>
+    where
+        T: 'a;
 
     /// Gets a value from a specific index, panicking on OOB
     #[must_use]
-    fn index(&self,index: usize) -> &T {
+    fn index(&self, index: usize) -> &T {
         self.get(index)().unwrap()
     }
 
     /// Gets a range of values from a range of indices, panicking on OOB
-    fn index_range<'a>(&'a self, index: Range<usize>) -> impl Iterator<Item=&'a T> where T: 'a {
+    fn index_range<'a>(&'a self, index: Range<usize>) -> impl Iterator<Item = &'a T>
+    where
+        T: 'a,
+    {
         self.get_range(index).unwrap()
     }
 }
@@ -94,13 +101,16 @@ impl<T, const N: usize> Backend<T> for [T; N] {
         self.into_iter()
     }
 
-    fn get<'a>(&'a self, index: usize) -> impl FnOnce() -> Option<&'a T> where T: 'a {
+    fn get<'a>(&'a self, index: usize) -> impl FnOnce() -> Option<&'a T>
+    where
+        T: 'a,
+    {
         move || <[T]>::get(self, index)
     }
 
-    fn get_range<'a>(&'a self, index: Range<usize>) -> Option<impl Iterator<Item=&'a T>>
+    fn get_range<'a>(&'a self, index: Range<usize>) -> Option<impl Iterator<Item = &'a T>>
     where
-        T: 'a
+        T: 'a,
     {
         <[T]>::get(self, index).map(|x| x.iter())
     }
@@ -151,11 +161,17 @@ impl<T> Backend<T> for Vec<T> {
         self.into_iter()
     }
 
-    fn get<'a>(&'a self, index: usize) -> impl FnOnce() -> Option<&'a T> where T: 'a {
+    fn get<'a>(&'a self, index: usize) -> impl FnOnce() -> Option<&'a T>
+    where
+        T: 'a,
+    {
         move || <[T]>::get(self, index)
     }
 
-    fn get_range<'a>(&'a self, index: Range<usize>) -> Option<impl Iterator<Item=&'a T>> where T: 'a {
+    fn get_range<'a>(&'a self, index: Range<usize>) -> Option<impl Iterator<Item = &'a T>>
+    where
+        T: 'a,
+    {
         <[T]>::get(self, index).map(|x| x.iter())
     }
 }
@@ -209,15 +225,21 @@ impl<T: Clone> Backend<T> for ConstantBackend<'_, T> {
         usize::MAX
     }
 
-    fn into_iter_all(self) -> impl Iterator<Item=T> {
+    fn into_iter_all(self) -> impl Iterator<Item = T> {
         iter::repeat(self.0.clone())
     }
 
-    fn get<'a>(&'a self, _index: usize) -> impl FnOnce() -> Option<&'a T> where T: 'a {
+    fn get<'a>(&'a self, _index: usize) -> impl FnOnce() -> Option<&'a T>
+    where
+        T: 'a,
+    {
         move || Some(self.0)
     }
 
-    fn get_range<'a>(&'a self, index: Range<usize>) -> Option<impl Iterator<Item=&'a T>> where T: 'a {
+    fn get_range<'a>(&'a self, index: Range<usize>) -> Option<impl Iterator<Item = &'a T>>
+    where
+        T: 'a,
+    {
         Some(iter::repeat_n(self.0, index.len()))
     }
 }
@@ -225,15 +247,15 @@ impl<T: Clone> Backend<T> for ConstantBackend<'_, T> {
 /// Backend that calls a closure with an index for each element
 pub struct FnBackend<T, F>
 where
-    F: FnMut(usize) ->  T
+    F: FnMut(usize) -> T,
 {
     func: RefCell<F>,
-    cache: Bump
+    cache: Bump,
 }
 
 impl<T, F> Clone for FnBackend<T, F>
 where
-    F: FnMut(usize) ->  T + Clone
+    F: FnMut(usize) -> T + Clone,
 {
     fn clone(&self) -> Self {
         Self {
@@ -243,9 +265,9 @@ where
     }
 }
 
-impl< T, F> FnBackend<T, F>
+impl<T, F> FnBackend<T, F>
 where
-    F: FnMut(usize) -> T
+    F: FnMut(usize) -> T,
 {
     /// Create a new functional backend from a [`FnMut`] closure.
     pub fn new(closure: F) -> Self {
@@ -256,16 +278,15 @@ where
     }
 }
 
-
 impl<T, F> Backend<T> for FnBackend<T, F>
 where
-    F: FnMut(usize) -> T
+    F: FnMut(usize) -> T,
 {
     fn length(&self) -> usize {
         usize::MAX
     }
 
-    fn into_iter_all(self) -> impl Iterator<Item=T> {
+    fn into_iter_all(self) -> impl Iterator<Item = T> {
         let mut i = 0;
         iter::from_fn(move || {
             let x = self.func.borrow_mut()(i);
@@ -274,16 +295,22 @@ where
         })
     }
 
-    fn get<'a>(&'a self, index: usize) -> impl FnOnce() -> Option<&'a T> where T: 'a
+    fn get<'a>(&'a self, index: usize) -> impl FnOnce() -> Option<&'a T>
+    where
+        T: 'a,
     {
         move || Some(self.cache.alloc(self.func.borrow_mut()(index)))
     }
 
-    fn get_range<'a>(&'a self, index: Range<usize>) -> Option<impl Iterator<Item=&'a T>>
+    fn get_range<'a>(&'a self, index: Range<usize>) -> Option<impl Iterator<Item = &'a T>>
     where
         T: 'a,
     {
-        Some(index.into_iter().map(move |i| &*self.cache.alloc(self.func.borrow_mut()(i))))
+        Some(
+            index
+                .into_iter()
+                .map(move |i| &*self.cache.alloc(self.func.borrow_mut()(i))),
+        )
     }
 }
 
@@ -380,7 +407,6 @@ mod test {
         assert_eq!(iter.next(), Some(&6));
         assert_eq!(iter.next(), None);
     }
-
 
     #[test]
     fn fn_backend_noncopy() {

@@ -1,5 +1,5 @@
-use crate::backend::{Backend,InMemBackend};
 use crate::arr::Arr;
+use crate::backend::{Backend, InMemBackend};
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
 
 macro_rules! ops {

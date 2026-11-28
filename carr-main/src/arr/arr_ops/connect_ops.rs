@@ -1,7 +1,7 @@
-use std::marker::PhantomData;
 use crate::arr::Arr;
 use crate::backend::Backend;
 use crate::dim::{CONCAT, TOTAL_DIM};
+use std::marker::PhantomData;
 
 impl<B, T, const D: &'static [usize]> Arr<B, T, D>
 where
@@ -24,10 +24,22 @@ where
 
         for i in 0..outer_size {
             let start_a = i * chunk_a;
-            new.extend_from_slice(&self.storage.index_range(start_a..start_a + chunk_a).cloned().collect::<Vec<_>>());
+            new.extend_from_slice(
+                &self
+                    .storage
+                    .index_range(start_a..start_a + chunk_a)
+                    .cloned()
+                    .collect::<Vec<_>>(),
+            );
 
             let start_b = i * chunk_b;
-            new.extend_from_slice(&other.storage.index_range(start_b..start_b + chunk_b).cloned().collect::<Vec<_>>());
+            new.extend_from_slice(
+                &other
+                    .storage
+                    .index_range(start_b..start_b + chunk_b)
+                    .cloned()
+                    .collect::<Vec<_>>(),
+            );
         }
 
         Arr {
